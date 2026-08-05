@@ -1,23 +1,47 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 
 type Theme = "system" | "light" | "dark";
 const STORAGE_KEY = "stacks-theme";
 const OPTIONS: Theme[] = ["system", "light", "dark"];
 
-export function ThemeToggle() {
-  const [theme, setTheme] = useState<Theme>("system");
+/**
+ * localStorage is external mutable state, so it is read through
+ * useSyncExternalStore rather than mirrored into useState via an effect. The
+ * effect version cascades renders (react-hooks/set-state-in-effect) and flashes
+ * the wrong selection for a frame after mount.
+ */
+const listeners = new Set<() => void>();
 
-  // Read after mount: localStorage doesn't exist during SSR, and reading it in
-  // useState's initializer would desync the server and client markup.
-  useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored === "light" || stored === "dark") setTheme(stored);
-  }, []);
+function emit() {
+  for (const listener of listeners) listener();
+}
+
+function subscribe(onChange: () => void) {
+  listeners.add(onChange);
+  // `storage` fires only for OTHER tabs; same-tab writes call emit() directly.
+  window.addEventListener("storage", onChange);
+  return () => {
+    listeners.delete(onChange);
+    window.removeEventListener("storage", onChange);
+  };
+}
+
+// Returns a primitive, so React's identity check settles immediately.
+function getSnapshot(): Theme {
+  const stored = localStorage.getItem(STORAGE_KEY);
+  return stored === "light" || stored === "dark" ? stored : "system";
+}
+
+// The server has no stored preference. React hydrates with this, then re-renders
+// from getSnapshot — which is why this doesn't produce a hydration mismatch.
+const getServerSnapshot = (): Theme => "system";
+
+export function ThemeToggle() {
+  const theme = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
   function apply(next: Theme) {
-    setTheme(next);
     if (next === "system") {
       localStorage.removeItem(STORAGE_KEY);
       document.documentElement.removeAttribute("data-theme");
@@ -25,6 +49,7 @@ export function ThemeToggle() {
       localStorage.setItem(STORAGE_KEY, next);
       document.documentElement.setAttribute("data-theme", next);
     }
+    emit();
   }
 
   return (

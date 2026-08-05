@@ -8,7 +8,10 @@ export function SignOutButton() {
   async function signOut() {
     setPending(true);
     await fetch("/api/auth/logout", { method: "POST" });
-    // Full navigation so middleware re-evaluates without the cookie.
+    // A hard navigation is deliberate here, not laziness. router.push() would
+    // leave the client router cache holding RSC payloads rendered while signed
+    // in; a full load discards them along with the cleared cookie.
+    // eslint-disable-next-line @next/next/no-location-assign-relative-destination
     window.location.assign("/login");
   }
 
