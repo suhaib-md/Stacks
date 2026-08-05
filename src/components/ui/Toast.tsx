@@ -3,8 +3,12 @@
 import Link from "next/link";
 import { useEffect } from "react";
 
+/**
+ * No id field: the dismiss timer keys off object identity, and every call site
+ * builds a fresh object. An id would only exist to be a `Date.now()` call, which
+ * the compiler rightly flags as impure.
+ */
 export type ToastMessage = {
-  id: number;
   text: string;
   href?: string;
   linkLabel?: string;

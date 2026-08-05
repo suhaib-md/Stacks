@@ -68,7 +68,6 @@ export function AddEntry() {
       setDraft(null);
       setSessionCount((n) => n + 1);
       setToast({
-        id: Date.now(),
         text: warning
           ? `Added “${book.title}” — you may already own it`
           : `Added “${book.title}”`,

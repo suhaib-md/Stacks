@@ -1,17 +1,22 @@
 import { eq } from "drizzle-orm";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { CoverColorProbe } from "@/components/book/CoverColorProbe";
+import { CoverImage } from "@/components/book/CoverImage";
 import { getDb } from "@/db";
 import { books } from "@/db/schema";
-import { parseStringArray } from "@/db/serde";
+import { formatAuthors, parseStringArray } from "@/db/serde";
+import { BookActions } from "./BookActions";
 
 export const dynamic = "force-dynamic";
 
-/**
- * Minimal for now — enough to verify what was saved and to give the confirm
- * sheet's "View it" link somewhere real to land. The dominant-colour header,
- * status control, progress, rating and notes all arrive in Phases 3 and 4.
- */
+const STATUS_LABEL: Record<string, string> = {
+  unread: "Unread",
+  reading: "Reading",
+  finished: "Finished",
+  dnf: "Did not finish",
+};
+
 export default async function BookDetailPage({
   params,
 }: {
@@ -33,84 +38,113 @@ export default async function BookDetailPage({
     ["Format", book.format],
     ["Language", book.language],
     ["Genre", book.genre],
-    ["ISBN-13", book.isbn13],
-    ["Status", book.readStatus],
+    ["ISBN", book.isbn13],
+    ["Added", book.createdAt.slice(0, 10)],
+    ["Started", book.startedAt],
+    ["Finished", book.finishedAt],
   ];
 
   return (
     <>
-      <Link href="/" className="text-sm text-ink-muted underline">
-        ← Library
-      </Link>
+      {/* Only set the variable when we already know the colour. Leaving it unset
+          lets the probe below fill it in at the root without being overridden. */}
+      <div
+        className="-mx-4 -mt-4 px-4 pb-6 pt-4"
+        style={
+          book.coverColor
+            ? ({ "--book-accent": book.coverColor } as React.CSSProperties)
+            : undefined
+        }
+      >
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-0 top-0 h-64 opacity-90"
+          style={{
+            background:
+              "linear-gradient(to bottom, var(--book-accent, var(--surface-sunk)) 0%, transparent 100%)",
+          }}
+        />
 
-      <div className="mt-4 flex flex-col gap-6 sm:flex-row">
-        {book.coverUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element -- remote covers are unoptimized by design
-          <img
-            src={book.coverUrl}
-            alt={`Cover of ${book.title}${authors.length ? ` by ${authors.join(", ")}` : ""}`}
-            width={160}
-            height={240}
-            className="h-[240px] w-40 shrink-0 self-start rounded-cover border border-rule object-cover"
-          />
-        ) : (
-          <div className="flex h-[240px] w-40 shrink-0 items-center justify-center rounded-cover border border-rule bg-surface-sunk p-3 text-center font-display text-sm text-ink-muted">
-            {book.title}
+        <div className="relative">
+          <Link href="/" className="text-sm underline opacity-80">
+            ← Library
+          </Link>
+
+          <div className="mt-4 flex flex-col gap-5 sm:flex-row">
+            <div className="h-[240px] w-40 shrink-0 self-start overflow-hidden rounded-cover border border-rule shadow-lg">
+              <CoverImage
+                src={book.coverUrl}
+                title={book.title}
+                authors={formatAuthors(book.authors)}
+                className="h-full w-full"
+              />
+            </div>
+
+            <div className="min-w-0 flex-1">
+              <h1 className="font-display text-3xl font-semibold leading-tight tracking-tight">
+                {book.title}
+              </h1>
+              {book.subtitle ? (
+                <p className="mt-1 font-display text-lg opacity-75">{book.subtitle}</p>
+              ) : null}
+              <p className="mt-2 text-sm">
+                {authors.length > 0 ? authors.join(", ") : "Unknown author"}
+              </p>
+
+              <p className="mt-3 inline-flex items-center rounded-full bg-surface px-3 py-1 text-xs font-medium">
+                {STATUS_LABEL[book.readStatus] ?? book.readStatus}
+                {book.rating ? (
+                  <span className="ml-2 text-accent">{"★".repeat(book.rating)}</span>
+                ) : null}
+              </p>
+
+              <BookActions bookId={book.id} title={book.title} />
+            </div>
           </div>
-        )}
-
-        <div className="min-w-0 flex-1">
-          <h1 className="font-display text-3xl font-semibold leading-tight tracking-tight">
-            {book.title}
-          </h1>
-          {book.subtitle ? (
-            <p className="mt-1 font-display text-lg text-ink-muted">{book.subtitle}</p>
-          ) : null}
-          <p className="mt-2 text-sm">
-            {authors.length > 0 ? authors.join(", ") : "Unknown author"}
-          </p>
-
-          <dl className="mt-6 grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
-            {facts
-              .filter(([, value]) => value !== null && value !== "")
-              .map(([label, value]) => (
-                <div key={label} className="contents">
-                  <dt className="text-ink-muted">{label}</dt>
-                  <dd className="capitalize tabular">{value}</dd>
-                </div>
-              ))}
-          </dl>
-
-          {tags.length > 0 ? (
-            <ul className="mt-4 flex flex-wrap gap-2">
-              {tags.map((tag) => (
-                <li
-                  key={tag}
-                  className="rounded-full bg-surface-sunk px-3 py-1 text-xs text-ink-muted"
-                >
-                  {tag}
-                </li>
-              ))}
-            </ul>
-          ) : null}
         </div>
       </div>
 
+      <dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-sm">
+        {facts
+          .filter(([, value]) => value !== null && value !== "")
+          .map(([label, value]) => (
+            <div key={label} className="contents">
+              <dt className="text-ink-muted">{label}</dt>
+              <dd className="capitalize tabular">{value}</dd>
+            </div>
+          ))}
+      </dl>
+
+      {tags.length > 0 ? (
+        <ul className="mt-4 flex flex-wrap gap-2">
+          {tags.map((tag) => (
+            <li key={tag} className="rounded-full bg-surface-sunk px-3 py-1 text-xs text-ink-muted">
+              {tag}
+            </li>
+          ))}
+        </ul>
+      ) : null}
+
       {book.description ? (
-        <div className="mt-8 max-w-prose">
+        <section className="mt-8 max-w-prose">
           <h2 className="text-sm font-medium text-ink-muted">Description</h2>
-          <p className="mt-2 whitespace-pre-line text-sm leading-relaxed">
-            {book.description}
-          </p>
-        </div>
+          {/* Provider text, rendered as text — never as HTML. */}
+          <p className="mt-2 whitespace-pre-line text-sm leading-relaxed">{book.description}</p>
+        </section>
       ) : null}
 
       {book.notes ? (
-        <div className="mt-8 max-w-prose">
+        <section className="mt-8 max-w-prose">
           <h2 className="text-sm font-medium text-ink-muted">Notes</h2>
           <p className="mt-2 whitespace-pre-line text-sm leading-relaxed">{book.notes}</p>
-        </div>
+        </section>
       ) : null}
+
+      <CoverColorProbe
+        bookId={book.id}
+        coverUrl={book.coverUrl}
+        hasColor={Boolean(book.coverColor)}
+      />
     </>
   );
 }
