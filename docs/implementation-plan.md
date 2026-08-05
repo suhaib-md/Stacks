@@ -68,21 +68,27 @@ Free tier is 1,000 requests/day, and every lookup is cached, so a full cabinet c
 
 ---
 
-## Phase 2 — Barcode scanner & rapid scan loop
+## Phase 2 — Barcode scanner & rapid scan loop ✅ BUILT
 
 **Goal:** Point the phone at a book, scan, confirm in one tap, scan the next. After this phase the app is usable for its actual purpose.
 
-- [ ] **2.1** Feature-detect `BarcodeDetector` with `EAN-13` support; dynamically import `html5-qrcode` only when absent, so devices with native support never download it.
-- [ ] **2.2** Scanner screen: camera permission request and denial handling, viewfinder overlay, torch toggle where `ImageCapture` reports support, always-visible manual-entry and search links.
-- [ ] **2.3** Detection handling: 2500 ms same-code debounce, ISBN checksum validation before lookup, silent rejection of non-book EAN-13s, beep + `navigator.vibrate(50)` on an accepted read.
-- [ ] **2.4** Wire the scan result into the Phase 1 confirm sheet → save → auto-dismiss → camera resumes without user action.
-- [ ] **2.5** Not-found path: offer manual search, or the manual form with the scanned ISBN prefilled. The scan is never wasted.
-- [ ] **2.6** Session counter pill ("12 added this session").
-- [ ] **2.7** Test on the actual phone and on a laptop webcam. Verify camera stream release on unmount and on route change.
+- [x] **2.1** Feature-detect `BarcodeDetector` (constructor *and* `ean_13` in `getSupportedFormats()`); `html5-qrcode` dynamically imported otherwise. Verified: its 361 KB chunk is referenced by no page HTML.
+- [x] **2.2** Scanner screen: permission handling with per-error messages, viewfinder, torch where the track reports the capability, always-visible ISBN and search escape hatches.
+- [x] **2.3** ~10 fps detection, 2500 ms same-code cooldown, ISBN checksum before lookup, silent rejection of non-book EAN-13s, synthesized beep + `vibrate(50)`.
+- [x] **2.4** Scan → the Phase 1 `ConfirmSheet` unchanged → save → sheet dismisses → camera resumes with no navigation.
+- [x] **2.5** Not-found path keeps the ISBN and offers "More fields" (`/add/manual?isbn=…`) and search.
+- [x] **2.6** Session counter pill.
+- [ ] **2.7** **Yours to do:** test on the actual phone. Camera behaviour cannot be verified from here.
 
-**Exit:** Catalog one full cabinet in a single sitting without touching the keyboard except for oddball books.
+**Exit — needs your shelf:** catalogue one full cabinet in a single sitting without touching the keyboard except for oddball books.
 
-**Watch for:** stream leaks. A camera that stays on after navigation is the most likely bug in this phase and the easiest to miss on desktop.
+### Decisions worth remembering
+
+- **The stream is paused, never stopped, while the confirm sheet is open.** Tearing it down would make every resume cost a fresh permission/negotiation round-trip, which is the difference between a loop and a chore.
+- **The cooldown clock restarts when the sheet closes**, not when the code was first seen. Otherwise the book you just saved is still in frame, the 2.5 s has elapsed during the confirm tap, and it re-detects straight into "already in your library".
+- **Non-book EAN-13s are rejected silently.** They're valid barcodes, so beeping and then failing would train you to distrust the beep.
+
+**Watch for:** stream leaks. Cleanup stops every track on unmount *and* on route change, including the case where `getUserMedia` resolves after you've already navigated away. This is the easiest bug to miss, because it is invisible on desktop — check that the phone's camera indicator goes out when you leave `/add`.
 
 ---
 

@@ -4,7 +4,7 @@ A single-user personal book catalog. Scan the barcode on a book you own, it look
 
 Built as a PWA so one codebase serves the phone (where cataloging happens) and the laptop (where browsing and editing happen).
 
-**Status:** Phases 0 and 1 complete and deployed. Phase 2 (barcode scanner) is next.
+**Status:** Phases 0–2 built and deployed. Phase 3 (cover grid, search, detail page) is next.
 
 **Live:** https://stacks.suhaib-muhammed2002.workers.dev
 
@@ -138,7 +138,9 @@ These cost real debugging time in Phase 0. Don't undo them.
 
 ## Things that are easy to get wrong here
 
-- **Camera stream leaks.** Stop the stream on unmount and on route change. A camera that stays live after navigation drains the phone and is invisible on desktop testing.
+- **Camera stream leaks.** Stop the stream on unmount and on route change — including when `getUserMedia` resolves *after* you've navigated away. A camera that stays live drains the phone and is invisible on desktop testing.
+- **Pause the scanner, don't stop it.** While the confirm sheet is open the stream stays live and only detection halts. Tearing it down makes every resume pay a fresh permission round-trip, which turns the scan loop into a chore.
+- **The same-code cooldown restarts when the confirm sheet closes.** Timing it from first detection means the book you just saved is still in frame after the confirm tap and re-detects into a duplicate warning.
 - **The manual path is not a fallback.** Regional and older Indian-market editions are frequently missing from both APIs. Manual entry is a first-class flow, always one tap from the scanner, with any scanned ISBN prefilled. A scan that finds nothing must never be a dead end.
 - **`isbn13` uniqueness is a database constraint, not just a pre-check.** The pre-check exists for a good error message; the constraint exists for correctness.
 - **Lookup cache TTLs are tiered, not binary.** Complete results never expire; thin results and misses get a 7-day recheck. Caching a thin result forever freezes a provider outage into the record permanently. A stale entry is still served as a fallback when the re-fetch also fails — never discard good data because a provider is down today.
@@ -161,10 +163,12 @@ Don't build these without asking. The backlog and its priority order are in [doc
 
 ## Current phase
 
-**Phase 2 — Barcode scanner & rapid scan loop.** See [docs/implementation-plan.md](docs/implementation-plan.md#phase-2--barcode-scanner--rapid-scan-loop).
+**Phase 3 — Library UI: cover grid, search, detail page.** See [docs/implementation-plan.md](docs/implementation-plan.md#phase-3--library-ui-cover-grid-search-detail-page).
 
-The scanner feeds the Phase 1 pipeline — it is a faster input method, not a new path. It reuses `/api/lookup/isbn/:isbn` and the existing `ConfirmSheet` unchanged; `/add` becomes the camera with ISBN entry and search as the always-visible escape hatches.
+The biggest UI chunk. The library list and `/book/[id]` currently exist in plain form purely to verify saved data — Phase 3 replaces them with the cover grid, the list toggle, status visual language, server-driven filters, and the dominant-colour detail header.
 
-Exit criteria: catalogue one full cabinet in a single sitting without touching the keyboard except for oddball books.
+Exit criteria: browsing feels good on the phone; any book is findable in under 5 seconds.
 
-Done so far: Phase 0 (deployed, passphrase-gated, remote D1, `/api/health` as the deploy smoke test) and Phase 1 (lookup, merge, tiered cache, dedup, three add paths, 78 unit tests).
+Done so far: Phase 0 (deployed, passphrase-gated, remote D1, `/api/health` smoke test), Phase 1 (lookup, merge, tiered cache, dedup, three add paths), Phase 2 (scanner + rapid loop). 81 unit tests. Phase 2's on-device test is still outstanding — camera behaviour can only be verified on the phone.
+
+**Known miss:** eager JS is ~173 KB gzipped on the library route against the TRD's 150 KB budget. Deferred to the Phase 5 performance pass.
