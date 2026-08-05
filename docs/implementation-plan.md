@@ -92,20 +92,28 @@ Free tier is 1,000 requests/day, and every lookup is cached, so a full cabinet c
 
 ---
 
-## Phase 3 — Library UI: cover grid, search, detail page
+## Phase 3 — Library UI: cover grid, search, detail page ✅ BUILT
 
 **Goal:** The app looks and feels like *your* library. The biggest UI chunk by a wide margin.
 
-- [ ] **3.1** Cover grid: responsive columns per the UI spec, locked 2:3 aspect ratio, lazy loading, skeleton placeholders, generated fallback tile for missing covers (title + author on a hash-derived color).
-- [ ] **3.2** List view toggle: compact rows (thumb, title, author, status chip, rating), persisted to `localStorage`.
-- [ ] **3.3** Status visual language on tiles: Reading ribbon, Finished check badge, Unread unadorned, DNF muted.
-- [ ] **3.4** Search bar (title / author / notes), filter chips (status, genre, format), sort menu — all server-driven through `/api/books` query params and reflected in the URL.
-- [ ] **3.5** Book detail page: client-side dominant-color extraction on first view cached to `cover_color`, gradient header, metadata block, description.
-- [ ] **3.6** Edit form and delete with confirm.
-- [ ] **3.7** Empty states (first-run vs. filtered-empty, visually distinct) and loading states on every route.
-- [ ] **3.8** Bulk edit mode: long-press or checkbox multi-select → set status, add tag, delete; applied via a single batched `PATCH /api/books/bulk`.
+**Also built, because Phase 3 could not work without them:** `/api/books/[id]` (GET/PATCH/DELETE) with the status-transition rules applied server-side, and `/api/books/bulk` (PATCH/DELETE) as a single batched round trip.
 
-**Exit:** Browsing feels good on the phone. Any book is findable in under 5 seconds.
+### The bug worth remembering
+
+`createBookSchema.partial()` is not a valid update schema. Zod applies a field's `.default()` when the key is absent, so every PATCH silently rewrote `readStatus`, `format`, `authors`, and `tags` to their defaults — and a `.nullish().transform()` that maps `undefined` to `null` blanked six text columns the same way. It surfaced as "I patched `currentPage` and the book went back to Unread". Both schemas are now written out separately and four regression tests pin the behaviour.
+
+- [x] **3.1** Cover grid: 3 columns on a phone up to 8 at 2xl, locked 2:3 so nothing reflows as covers load, lazy loading, skeletons, and a generated spine-style tile for missing covers coloured by a hash of the title — deterministic, so a book always looks the same.
+- [x] **3.2** List view toggle. Persisted as a **cookie**, not `localStorage`, so the server renders the right layout on first paint instead of flashing the wrong one.
+- [x] **3.3** Status visual language: Reading ribbon, Finished check badge, DNF muted plus a label, Unread unadorned. Never colour alone.
+- [x] **3.4** Search, status/format/genre chips, and sort — all in the URL, all resolved server-side through one shared query builder (`src/lib/queries.ts`) so the page and `/api/books` can't drift.
+- [x] **3.5** Detail page with a dominant-colour gradient header, extracted client-side on first view and cached to `cover_color`. Silent on failure — most cover hosts send no CORS headers.
+- [x] **3.6** Edit form and delete with a confirm that names the book.
+- [x] **3.7** First-run and filtered-empty states, visually distinct; loading skeletons.
+- [x] **3.8** Bulk edit: long-press to select, then set status, add a tag (union, never replace), or delete.
+
+**Exit — needs your shelf:** browsing feels good on the phone, any book findable in under 5 seconds.
+
+**Verified locally:** grid and list, every filter and sort, both empty states, status marks, generated fallback tiles, detail and edit pages, colour probe with validation, bulk status/tag/delete, single delete, and the status-transition rules end to end.
 
 **Watch for:** cover hosts that don't send CORS headers will break canvas color extraction — detect and fall back to the neutral accent silently rather than logging errors on every detail view.
 

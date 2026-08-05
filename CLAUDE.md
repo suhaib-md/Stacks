@@ -4,7 +4,7 @@ A single-user personal book catalog. Scan the barcode on a book you own, it look
 
 Built as a PWA so one codebase serves the phone (where cataloging happens) and the laptop (where browsing and editing happen).
 
-**Status:** Phases 0–2 built and deployed. Phase 3 (cover grid, search, detail page) is next.
+**Status:** Phases 0–3 built and deployed. Phase 4 (reading features) is next.
 
 **Live:** https://stacks.suhaib-muhammed2002.workers.dev
 
@@ -106,6 +106,9 @@ Deploys happen automatically on push to `main` via Cloudflare Git integration. *
 - Columns are `snake_case`; the Drizzle model is `camelCase`, mapped explicitly.
 - ISBNs are normalized to ISBN-13, digits only, before storage or comparison.
 
+### Zod schemas: create and update are written separately, on purpose
+`createBookSchema.partial()` is **not** a valid update schema and must never be used as one. Zod applies a field's `.default()` when the key is absent, so a derived partial silently rewrote `readStatus`, `format`, `authors`, and `tags` on every PATCH. The same shape of bug hit text fields: a `.nullish().transform()` that maps `undefined` to `null` blanks the column. For updates, **absent must mean "leave alone"** — hence `patchableText` alongside `nullableText`. Regression tests live in [src/lib/books.test.ts](src/lib/books.test.ts).
+
 ### Code
 - Server components by default. Client components only where interaction demands it: scanner, confirm sheet, filter controls, progress widget, rating, notes, bulk toolbar, color extraction.
 - Filters, sort, and view mode live in URL search params — not in client state. Back button and shareable links work for free.
@@ -165,12 +168,12 @@ Don't build these without asking. The backlog and its priority order are in [doc
 
 ## Current phase
 
-**Phase 3 — Library UI: cover grid, search, detail page.** See [docs/implementation-plan.md](docs/implementation-plan.md#phase-3--library-ui-cover-grid-search-detail-page).
+**Phase 4 — Reading features.** See [docs/implementation-plan.md](docs/implementation-plan.md#phase-4--reading-features).
 
-The biggest UI chunk. The library list and `/book/[id]` currently exist in plain form purely to verify saved data — Phase 3 replaces them with the cover grid, the list toggle, status visual language, server-driven filters, and the dominant-colour detail header.
+The server-side status rules (`deriveStatusChanges`, `clampPage`) and the `currentPage` PATCH path already exist from Phase 3 — Phase 4 is mostly the UI on top: quick page increments, tap-to-update from the Currently Reading strip, autosaving rating and notes.
 
-Exit criteria: browsing feels good on the phone; any book is findable in under 5 seconds.
+Exit criteria: your active read sits at the top of home with a live progress bar, updatable in two taps.
 
-Done so far: Phase 0 (deployed, passphrase-gated, remote D1, `/api/health` smoke test), Phase 1 (lookup, merge, tiered cache, dedup, three add paths), Phase 2 (scanner + rapid loop). 81 unit tests. Phase 2's on-device test is still outstanding — camera behaviour can only be verified on the phone.
+Done so far: Phase 0 (deployed, passphrase-gated, remote D1, `/api/health` smoke test), Phase 1 (lookup, merge, tiered cache, dedup, three add paths), Phase 2 (scanner + rapid loop), Phase 3 (cover grid, filters, detail, edit, delete, bulk). 95 unit tests.
 
 **Known miss:** eager JS is ~173 KB gzipped on the library route against the TRD's 150 KB budget. Deferred to the Phase 5 performance pass.
