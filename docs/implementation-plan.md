@@ -26,7 +26,7 @@ Six phases. Each has a goal, a task list, and an exit criterion that is a *demon
 - Next 16's `proxy.ts` is Node-only and the adapter rejects it — stayed on `middleware.ts`.
 - Secrets set after a deploy stay invisible until the next `wrangler deploy`.
 
-**Still open:** Cloudflare Git integration for deploy-on-push is not wired up; deploys are currently manual via `npm run deploy`.
+**Deploys:** Cloudflare Workers Builds is connected to `suhaib-md/Stacks`, production branch `main`. Build command is `npx opennextjs-cloudflare build` and deploy is `npx wrangler deploy` — the default `npm run build` would only produce the Next output and ship no Worker. Runtime secrets live on the Worker, not in the build environment, so CI needs none.
 
 ---
 
