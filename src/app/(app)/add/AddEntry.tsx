@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { AddNav } from "@/components/book/AddNav";
 import { ConfirmSheet, type ConfirmDraft } from "@/components/book/ConfirmSheet";
 import { Scanner } from "@/components/scanner/Scanner";
@@ -25,26 +25,35 @@ export function AddEntry() {
 
   const [cameraUsable, setCameraUsable] = useState(true);
   const [draft, setDraft] = useState<ConfirmDraft | null>(null);
-  const [looking, setLooking] = useState(false);
+  const [lookingIsbn, setLookingIsbn] = useState<string | null>(null);
   const [sessionCount, setSessionCount] = useState(0);
   const [toast, setToast] = useState<ToastMessage | null>(null);
   const [isbnEntryOpen, setIsbnEntryOpen] = useState(false);
 
+  /**
+   * Monotonic request id. Only the newest lookup may set the draft — otherwise
+   * an earlier, slower response lands last and you get a book you didn't scan.
+   */
+  const requestRef = useRef(0);
+
   const dismissToast = useCallback(() => setToast(null), []);
   const onUnsupported = useCallback(() => setCameraUsable(false), []);
 
-  const lookup = useCallback(async (rawIsbn: string) => {
-    const isbn13 = parseIsbn(rawIsbn)?.isbn13;
-    if (!isbn13) return; // Not a book barcode — handled by the caller.
+  /** Takes an already-validated ISBN-13. */
+  const runLookup = useCallback(async (isbn13: string) => {
+    const seq = requestRef.current + 1;
+    requestRef.current = seq;
 
-    setLooking(true);
+    setLookingIsbn(isbn13);
     const res = await fetch(`/api/lookup/isbn/${isbn13}`).catch(() => null);
     const data = (await res?.json().catch(() => null)) as
       | { metadata: BookMetadata }
       | { error: { code: string } }
       | null;
-    setLooking(false);
 
+    if (seq !== requestRef.current) return; // Superseded; drop it silently.
+
+    setLookingIsbn(null);
     // A miss is never a dead end: the sheet opens with the ISBN retained.
     setDraft({
       metadata: data && "metadata" in data ? data.metadata : null,
@@ -54,13 +63,16 @@ export function AddEntry() {
   }, []);
 
   const onDetect = useCallback(
-    (rawValue: string) => {
-      // Non-book EAN-13s (groceries, magazines) are rejected silently — beeping
-      // at a cereal box would train you to distrust the beep.
-      if (!isValidIsbn(rawValue)) return;
-      void lookup(rawValue);
+    (rawValue: string): boolean => {
+      // Non-book EAN-13s (groceries, magazines) are rejected silently, and the
+      // scanner only beeps once we return true — a chirp followed by nothing
+      // reads as a broken app.
+      const isbn13 = parseIsbn(rawValue)?.isbn13;
+      if (!isbn13 || !isValidIsbn(rawValue)) return false;
+      void runLookup(isbn13);
+      return true;
     },
-    [lookup],
+    [runLookup],
   );
 
   const onSaved = useCallback(
@@ -97,7 +109,11 @@ export function AddEntry() {
   return (
     // Fixed overlay so the camera is genuinely full-bleed over the app shell.
     <div className="fixed inset-0 z-40 bg-black">
-      <Scanner paused={draft !== null || looking || isbnEntryOpen} onDetect={onDetect} onUnsupported={onUnsupported} />
+      <Scanner
+        paused={draft !== null || lookingIsbn !== null || isbnEntryOpen}
+        onDetect={onDetect}
+        onUnsupported={onUnsupported}
+      />
 
       {sessionCount > 0 ? (
         <div className="pointer-events-none absolute left-1/2 top-4 -translate-x-1/2 rounded-full bg-black/60 px-3 py-1.5 text-xs font-medium text-white backdrop-blur tabular">
@@ -105,10 +121,13 @@ export function AddEntry() {
         </div>
       ) : null}
 
-      {looking ? (
+      {lookingIsbn ? (
         <div className="pointer-events-none absolute inset-x-0 bottom-32 flex justify-center">
-          <span className="rounded-full bg-black/70 px-4 py-2 text-sm text-white backdrop-blur">
+          {/* Shows the digits actually read, so a misread is visible rather than
+              mysterious. */}
+          <span className="rounded-full bg-black/70 px-4 py-2 text-center text-sm text-white backdrop-blur">
             Looking up…
+            <span className="ml-2 tabular opacity-70">{lookingIsbn}</span>
           </span>
         </div>
       ) : null}
@@ -135,7 +154,8 @@ export function AddEntry() {
         onClose={() => setIsbnEntryOpen(false)}
         onSubmit={(isbn) => {
           setIsbnEntryOpen(false);
-          void lookup(isbn);
+          const isbn13 = parseIsbn(isbn)?.isbn13;
+          if (isbn13) void runLookup(isbn13);
         }}
       />
 

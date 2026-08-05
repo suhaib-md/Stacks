@@ -32,7 +32,8 @@ export function Scanner({
 }: {
   /** True while the confirm sheet is open: stop detecting, keep the stream warm. */
   paused: boolean;
-  onDetect: (rawValue: string) => void;
+  /** Returns true if the code was accepted and a lookup started. */
+  onDetect: (rawValue: string) => boolean;
   onUnsupported: () => void;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -40,6 +41,16 @@ export function Scanner({
   const pausedRef = useRef(paused);
   const lastCodeRef = useRef<{ value: string; at: number } | null>(null);
   const onDetectRef = useRef(onDetect);
+  /**
+   * Set synchronously the moment a code is accepted.
+   *
+   * `paused` can't do this job alone: it travels prop -> render -> effect, and
+   * the detect loop keeps ticking during that gap. A DIFFERENT barcode landing
+   * in that window (a neighbouring book, a misread) starts a second lookup, and
+   * whichever resolves last wins — which is how you scan one book and get
+   * another.
+   */
+  const busyRef = useRef(false);
 
   const [phase, setPhase] = useState<Phase>({ kind: "checking" });
   const [kind, setKind] = useState<DetectorKind>("unsupported");
@@ -60,28 +71,39 @@ export function Scanner({
     const wasPaused = pausedRef.current;
     pausedRef.current = paused;
 
-    // Resuming: restart the cooldown clock. Without this, the book you just
-    // saved is usually still in frame and more than 2.5s has passed during the
-    // confirm tap — so it re-detects instantly and you get "already in your
-    // library" for the book you just added.
-    if (wasPaused && !paused && lastCodeRef.current) {
-      lastCodeRef.current = { ...lastCodeRef.current, at: Date.now() };
+    // Resuming: release the lock and restart the cooldown clock. Without the
+    // cooldown reset, the book you just saved is usually still in frame and more
+    // than 2.5s has passed during the confirm tap — so it re-detects instantly
+    // and you get "already in your library" for the book you just added.
+    if (wasPaused && !paused) {
+      busyRef.current = false;
+      if (lastCodeRef.current) {
+        lastCodeRef.current = { ...lastCodeRef.current, at: Date.now() };
+      }
     }
   }, [paused]);
   useEffect(() => {
     onDetectRef.current = onDetect;
   }, [onDetect]);
 
-  /** Debounce, validate, and forward. Cameras fire many frames per barcode. */
+  /** Debounce, forward, and only then confirm. Cameras fire many frames per barcode. */
   const handleRaw = useCallback((rawValue: string) => {
+    // One lookup at a time, enforced without waiting for a React render.
+    if (busyRef.current) return;
+
     const now = Date.now();
     const last = lastCodeRef.current;
     if (last && last.value === rawValue && now - last.at < SAME_CODE_COOLDOWN_MS) return;
-    lastCodeRef.current = { value: rawValue, at: now };
 
+    // Feedback comes AFTER the caller accepts it. Beeping first meant a grocery
+    // barcode chirped and then silently did nothing, which reads as a bug.
+    const accepted = onDetectRef.current(rawValue);
+    if (!accepted) return;
+
+    lastCodeRef.current = { value: rawValue, at: now };
+    busyRef.current = true;
     beep();
     vibrate(50);
-    onDetectRef.current(rawValue);
   }, []);
 
   useEffect(() => {
