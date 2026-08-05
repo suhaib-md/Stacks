@@ -119,17 +119,21 @@ Free tier is 1,000 requests/day, and every lookup is cached, so a full cabinet c
 
 ---
 
-## Phase 4 — Reading features
+## Phase 4 — Reading features ✅ BUILT
 
 **Goal:** Track what you're reading and what you've read.
 
-- [ ] **4.1** Status transitions with automatic dates, enforced server-side in the PATCH handler (Reading → `started_at`; Finished → `finished_at` + rating prompt; Unread → reset `current_page`).
-- [ ] **4.2** Page progress: −10 / +10 / +25 quick actions plus direct numeric entry, clamped to `page_count`, optimistic progress bar.
-- [ ] **4.3** Currently Reading strip on home: cover, progress bar, tap-to-update without leaving the page.
-- [ ] **4.4** Rating stars and notes editor on the detail page, both autosaving (rating on tap, notes on 1 s idle and on blur) with a visible saved indicator and retry on failure.
-- [ ] **4.5** Finished filter defaulting to `finished_at DESC` — the reading-history view.
+- [x] **4.1** Status control on the detail page. The side effects were already server-side from Phase 3; the UI only sends the new status and rolls back its own optimistic state if the write fails. Finishing an unrated book prompts for a rating.
+- [x] **4.2** Page progress: −10 / +10 / +25 plus direct entry, clamped to `page_count`, bar moves on tap and reconciles on response.
+- [x] **4.3** The Currently Reading progress bar is a button — progress is two taps from home and never leaves the page. "Finished it" is available from the same sheet.
+- [x] **4.4** Rating (tap, and tap again to clear) and notes (1 s idle + on blur) both autosave through one shared `usePatchBook`, with a save indicator and a `beforeunload` guard so a half-typed note can't be lost to a navigation.
+- [x] **4.5** Filtering to Finished defaults to `finished_at DESC`. An explicit `?sort=` still wins.
 
-**Exit:** Your active read sits at the top of home with a live progress bar, updatable in two taps.
+**Exit — met locally:** an active read sits at the top of home with a live bar, updatable in two taps.
+
+**Verified:** progress writes and clamping (9999 → 300 on a 300pp book), rating set and clear, notes set and clear, finishing stamps the date *and* completes progress, Finished view ordered by finish date with explicit sort overriding, and the unfiltered library still defaulting to recently added.
+
+113 unit tests, including the filter-defaulting rules.
 
 ---
 

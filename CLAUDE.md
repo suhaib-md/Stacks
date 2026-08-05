@@ -4,7 +4,7 @@ A single-user personal book catalog. Scan the barcode on a book you own, it look
 
 Built as a PWA so one codebase serves the phone (where cataloging happens) and the laptop (where browsing and editing happen).
 
-**Status:** Phases 0–3 built and deployed. Phase 4 (reading features) is next.
+**Status:** Phases 0–4 built and deployed. Phase 5 (PWA, offline, polish, export) is next — the last one before v1.
 
 **Live:** https://stacks.suhaib-muhammed2002.workers.dev
 
@@ -168,12 +168,14 @@ Don't build these without asking. The backlog and its priority order are in [doc
 
 ## Current phase
 
-**Phase 4 — Reading features.** See [docs/implementation-plan.md](docs/implementation-plan.md#phase-4--reading-features).
+**Phase 5 — PWA, offline, polish, export.** See [docs/implementation-plan.md](docs/implementation-plan.md#phase-5--pwa-offline-polish-export).
 
-The server-side status rules (`deriveStatusChanges`, `clampPage`) and the `currentPage` PATCH path already exist from Phase 3 — Phase 4 is mostly the UI on top: quick page increments, tap-to-update from the Currently Reading strip, autosaving rating and notes.
+Manifest and icons, a Serwist service worker caching the app shell and last library list (so "do I own this?" works in a bookstore), the dark-mode pass, CSV export, and the performance pass.
 
-Exit criteria: your active read sits at the top of home with a live progress bar, updatable in two taps.
+Exit criteria: installed on the phone home screen; a full cabinet exported as a CSV backup that opens cleanly.
 
-Done so far: Phase 0 (deployed, passphrase-gated, remote D1, `/api/health` smoke test), Phase 1 (lookup, merge, tiered cache, dedup, three add paths), Phase 2 (scanner + rapid loop), Phase 3 (cover grid, filters, detail, edit, delete, bulk). 95 unit tests.
+Done so far: Phase 0 (deployed, passphrase-gated, remote D1, `/api/health` smoke test), Phase 1 (lookup, merge, tiered cache, dedup, three add paths), Phase 2 (scanner + rapid loop), Phase 3 (cover grid, filters, detail, edit, delete, bulk), Phase 4 (reading controls, tap-to-update, reading history). 113 unit tests.
+
+**Carried into Phase 5:** eager JS is ~173 KB gzipped on the library route against the TRD's 150 KB budget — task 5.5 is where that gets addressed.
 
 **Known miss:** eager JS is ~173 KB gzipped on the library route against the TRD's 150 KB budget. Deferred to the Phase 5 performance pass.
