@@ -37,15 +37,23 @@ export function parseFilters(
 ): LibraryFilters {
   const status = params.get("status");
   const format = params.get("format");
-  const sort = params.get("sort") ?? "created";
+  const requestedSort = params.get("sort");
   const view = params.get("view") ?? defaults.view ?? "grid";
+
+  // Filtering to Finished is asking "what have I read?", and that question is
+  // ordered by when you finished — not by when the book was catalogued. An
+  // explicit ?sort= still wins.
+  const fallbackSort = status === "finished" ? "finished" : "created";
 
   return {
     q: params.get("q")?.trim() || null,
     status: status && STATUSES.has(status) ? (status as Book["readStatus"]) : null,
     genre: params.get("genre")?.trim() || null,
     format: format && FORMATS.has(format) ? (format as Book["format"]) : null,
-    sort: sort in SORT_COLUMNS ? (sort as keyof typeof SORT_COLUMNS) : "created",
+    sort:
+      requestedSort && requestedSort in SORT_COLUMNS
+        ? (requestedSort as keyof typeof SORT_COLUMNS)
+        : fallbackSort,
     order: params.get("order") === "asc" ? "asc" : "desc",
     page: Math.max(1, Number.parseInt(params.get("page") ?? "1", 10) || 1),
     perPage: Math.min(

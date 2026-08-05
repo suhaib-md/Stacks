@@ -3,9 +3,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CoverColorProbe } from "@/components/book/CoverColorProbe";
 import { CoverImage } from "@/components/book/CoverImage";
+import { ReadingPanel } from "@/components/book/ReadingPanel";
 import { getDb } from "@/db";
 import { books } from "@/db/schema";
 import { formatAuthors, parseStringArray } from "@/db/serde";
+import { toApiBook } from "@/lib/books";
 import { BookActions } from "./BookActions";
 
 export const dynamic = "force-dynamic";
@@ -93,8 +95,10 @@ export default async function BookDetailPage({
 
               <p className="mt-3 inline-flex items-center rounded-full bg-surface px-3 py-1 text-xs font-medium">
                 {STATUS_LABEL[book.readStatus] ?? book.readStatus}
-                {book.rating ? (
-                  <span className="ml-2 text-accent">{"★".repeat(book.rating)}</span>
+                {book.readStatus === "reading" && book.pageCount ? (
+                  <span className="ml-2 tabular opacity-70">
+                    {book.currentPage} / {book.pageCount}
+                  </span>
                 ) : null}
               </p>
 
@@ -104,7 +108,9 @@ export default async function BookDetailPage({
         </div>
       </div>
 
-      <dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-sm">
+      <ReadingPanel book={toApiBook(book)} />
+
+      <dl className="mt-8 grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-sm">
         {facts
           .filter(([, value]) => value !== null && value !== "")
           .map(([label, value]) => (
@@ -130,13 +136,6 @@ export default async function BookDetailPage({
           <h2 className="text-sm font-medium text-ink-muted">Description</h2>
           {/* Provider text, rendered as text — never as HTML. */}
           <p className="mt-2 whitespace-pre-line text-sm leading-relaxed">{book.description}</p>
-        </section>
-      ) : null}
-
-      {book.notes ? (
-        <section className="mt-8 max-w-prose">
-          <h2 className="text-sm font-medium text-ink-muted">Notes</h2>
-          <p className="mt-2 whitespace-pre-line text-sm leading-relaxed">{book.notes}</p>
         </section>
       ) : null}
 
