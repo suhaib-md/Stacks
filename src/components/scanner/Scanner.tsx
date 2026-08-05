@@ -1,0 +1,306 @@
+"use client";
+
+import Link from "next/link";
+import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  CAMERA_CONSTRAINTS,
+  beep,
+  createNativeDetector,
+  detectSupport,
+  setTorch,
+  stopStream,
+  supportsTorch,
+  vibrate,
+  type DetectorKind,
+} from "@/lib/scanner/detector";
+
+type Phase =
+  | { kind: "checking" }
+  | { kind: "requesting" }
+  | { kind: "scanning" }
+  | { kind: "denied"; message: string }
+  | { kind: "unsupported" };
+
+const FALLBACK_ELEMENT_ID = "stacks-fallback-scanner";
+const DETECT_INTERVAL_MS = 100; // ~10 fps — plenty for a barcode, easy on the battery
+const SAME_CODE_COOLDOWN_MS = 2500;
+
+export function Scanner({
+  paused,
+  onDetect,
+  onUnsupported,
+}: {
+  /** True while the confirm sheet is open: stop detecting, keep the stream warm. */
+  paused: boolean;
+  onDetect: (rawValue: string) => void;
+  onUnsupported: () => void;
+}) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const pausedRef = useRef(paused);
+  const lastCodeRef = useRef<{ value: string; at: number } | null>(null);
+  const onDetectRef = useRef(onDetect);
+
+  const [phase, setPhase] = useState<Phase>({ kind: "checking" });
+  const [kind, setKind] = useState<DetectorKind>("unsupported");
+  const [torchOn, setTorchOn] = useState(false);
+  const [torchAvailable, setTorchAvailable] = useState(false);
+
+  // Keep refs current without restarting the camera when these props change.
+  useEffect(() => {
+    const wasPaused = pausedRef.current;
+    pausedRef.current = paused;
+
+    // Resuming: restart the cooldown clock. Without this, the book you just
+    // saved is usually still in frame and more than 2.5s has passed during the
+    // confirm tap — so it re-detects instantly and you get "already in your
+    // library" for the book you just added.
+    if (wasPaused && !paused && lastCodeRef.current) {
+      lastCodeRef.current = { ...lastCodeRef.current, at: Date.now() };
+    }
+  }, [paused]);
+  useEffect(() => {
+    onDetectRef.current = onDetect;
+  }, [onDetect]);
+
+  /** Debounce, validate, and forward. Cameras fire many frames per barcode. */
+  const handleRaw = useCallback((rawValue: string) => {
+    const now = Date.now();
+    const last = lastCodeRef.current;
+    if (last && last.value === rawValue && now - last.at < SAME_CODE_COOLDOWN_MS) return;
+    lastCodeRef.current = { value: rawValue, at: now };
+
+    beep();
+    vibrate(50);
+    onDetectRef.current(rawValue);
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    // Populated only on the fallback path so cleanup can tear it down.
+    let fallback: { stop: () => Promise<void> } | null = null;
+    // Captured now rather than read in cleanup, where the ref may already point
+    // somewhere else.
+    const videoEl = videoRef.current;
+
+    async function start() {
+      const support = await detectSupport();
+      if (cancelled) return;
+
+      setKind(support);
+
+      if (support === "unsupported") {
+        setPhase({ kind: "unsupported" });
+        onUnsupported();
+        return;
+      }
+
+      setPhase({ kind: "requesting" });
+
+      if (support === "native") {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia(CAMERA_CONSTRAINTS);
+          if (cancelled) {
+            // Permission resolved after we navigated away — release it immediately.
+            stopStream(stream);
+            return;
+          }
+          streamRef.current = stream;
+          setTorchAvailable(supportsTorch(stream));
+
+          const video = videoEl;
+          if (!video) {
+            stopStream(stream);
+            return;
+          }
+          video.srcObject = stream;
+          await video.play().catch(() => {});
+          if (cancelled) return;
+
+          const detector = createNativeDetector();
+          if (!detector) {
+            setPhase({ kind: "unsupported" });
+            onUnsupported();
+            return;
+          }
+
+          setPhase({ kind: "scanning" });
+
+          const tick = async () => {
+            if (cancelled) return;
+            if (!pausedRef.current && video.readyState >= 2) {
+              try {
+                const codes = await detector.detect(video);
+                if (!cancelled && codes.length > 0) handleRaw(codes[0].rawValue);
+              } catch {
+                // A single failed frame is not worth surfacing; keep scanning.
+              }
+            }
+            if (!cancelled) timer = setTimeout(tick, DETECT_INTERVAL_MS);
+          };
+          void tick();
+        } catch (error) {
+          if (cancelled) return;
+          setPhase({ kind: "denied", message: describeCameraError(error) });
+        }
+        return;
+      }
+
+      // Fallback: html5-qrcode owns its own stream and video element. Loaded
+      // dynamically so devices with native support never download ~300 KB.
+      try {
+        const { Html5Qrcode, Html5QrcodeSupportedFormats } = await import("html5-qrcode");
+        if (cancelled) return;
+
+        const instance = new Html5Qrcode(FALLBACK_ELEMENT_ID, {
+          formatsToSupport: [Html5QrcodeSupportedFormats.EAN_13],
+          verbose: false,
+        });
+        fallback = { stop: async () => { await instance.stop(); instance.clear(); } };
+
+        await instance.start(
+          { facingMode: "environment" },
+          { fps: 10, qrbox: { width: 260, height: 160 } },
+          (decoded) => {
+            if (!pausedRef.current) handleRaw(decoded);
+          },
+          () => {
+            // Fires constantly for "no code in this frame". Not an error.
+          },
+        );
+        if (cancelled) return;
+        setPhase({ kind: "scanning" });
+      } catch (error) {
+        if (cancelled) return;
+        setPhase({ kind: "denied", message: describeCameraError(error) });
+      }
+    }
+
+    void start();
+
+    return () => {
+      // Runs on unmount AND on route change. Everything acquired above must be
+      // released here or the camera light stays on and the battery drains.
+      cancelled = true;
+      if (timer) clearTimeout(timer);
+      if (videoEl) videoEl.srcObject = null;
+      stopStream(streamRef.current);
+      streamRef.current = null;
+      void fallback?.stop().catch(() => {});
+    };
+  }, [handleRaw, onUnsupported]);
+
+  async function toggleTorch() {
+    const next = !torchOn;
+    const ok = await setTorch(streamRef.current, next);
+    if (ok) setTorchOn(next);
+  }
+
+  if (phase.kind === "unsupported") return null;
+
+  return (
+    <div className="absolute inset-0 bg-black">
+      {kind === "native" ? (
+        <video
+          ref={videoRef}
+          playsInline
+          muted
+          autoPlay
+          className="h-full w-full object-cover"
+        />
+      ) : (
+        <div id={FALLBACK_ELEMENT_ID} className="h-full w-full [&_video]:h-full [&_video]:w-full [&_video]:object-cover" />
+      )}
+
+      {phase.kind === "scanning" ? (
+        <Viewfinder paused={paused} />
+      ) : (
+        <div className="absolute inset-0 flex items-center justify-center p-6 text-center">
+          {phase.kind === "denied" ? (
+            <div className="max-w-xs rounded-card bg-surface p-5">
+              <p className="font-display text-lg">Camera unavailable</p>
+              <p className="mt-2 text-sm text-ink-muted">{phase.message}</p>
+              <p className="mt-3 text-xs text-ink-faint">
+                You can still add books by ISBN or by searching — the buttons below
+                work either way.
+              </p>
+            </div>
+          ) : (
+            <p className="text-sm text-white/80">
+              {phase.kind === "checking" ? "Checking camera…" : "Starting camera…"}
+            </p>
+          )}
+        </div>
+      )}
+
+      {torchAvailable && phase.kind === "scanning" ? (
+        <button
+          type="button"
+          onClick={toggleTorch}
+          aria-pressed={torchOn}
+          aria-label={torchOn ? "Turn torch off" : "Turn torch on"}
+          className={`absolute right-4 top-4 flex size-11 items-center justify-center rounded-full backdrop-blur ${
+            torchOn ? "bg-accent text-paper" : "bg-black/50 text-white"
+          }`}
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="size-5">
+            <path d="M9 2h6v4l-1 3h-4L9 6zM10 9h4v5l-2 8-2-8z" strokeLinejoin="round" />
+          </svg>
+        </button>
+      ) : null}
+
+      <Link
+        href="/"
+        aria-label="Back to library"
+        className="absolute left-4 top-4 flex size-11 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="size-5">
+          <path d="M15 18l-6-6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </Link>
+    </div>
+  );
+}
+
+function Viewfinder({ paused }: { paused: boolean }) {
+  return (
+    <div aria-hidden="true" className="pointer-events-none absolute inset-0">
+      {/* Dimmed surround with a clear window, drawn as four panels so the middle
+          stays fully transparent — a box-shadow spread would tint the video. */}
+      <div className="absolute inset-x-0 top-0 h-[calc(50%-5rem)] bg-black/55" />
+      <div className="absolute inset-x-0 bottom-0 h-[calc(50%-5rem)] bg-black/55" />
+      <div className="absolute left-0 top-[calc(50%-5rem)] h-40 w-[calc(50%-9rem)] bg-black/55" />
+      <div className="absolute right-0 top-[calc(50%-5rem)] h-40 w-[calc(50%-9rem)] bg-black/55" />
+
+      <div className="absolute left-1/2 top-1/2 h-40 w-72 -translate-x-1/2 -translate-y-1/2 rounded-lg border-2 border-white/70">
+        {!paused ? (
+          <div className="absolute inset-x-0 top-1/2 h-0.5 bg-accent motion-safe:animate-[scanline_2s_ease-in-out_infinite]" />
+        ) : null}
+      </div>
+
+      <style>{`
+        @keyframes scanline {
+          0%, 100% { transform: translateY(-4.5rem); opacity: .9 }
+          50%      { transform: translateY(4.5rem);  opacity: .9 }
+        }
+      `}</style>
+    </div>
+  );
+}
+
+function describeCameraError(error: unknown): string {
+  const name = error instanceof Error ? error.name : "";
+  switch (name) {
+    case "NotAllowedError":
+    case "SecurityError":
+      return "Permission was denied. Allow camera access for this site in your browser settings, then reload.";
+    case "NotFoundError":
+    case "DevicesNotFoundError":
+      return "No camera was found on this device.";
+    case "NotReadableError":
+      return "The camera is already in use by another app.";
+    default:
+      return "The camera could not be started.";
+  }
+}

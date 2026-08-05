@@ -188,10 +188,21 @@ function ConfirmSheetForm({
       </div>
 
       {!metadata ? (
-        <p className="mt-4 rounded-card bg-surface-sunk p-3 text-xs text-ink-muted">
-          No metadata found{isbn ? " for that ISBN" : ""}. Fill in what you know — the
-          book still gets catalogued.
-        </p>
+        <div className="mt-4 rounded-card bg-surface-sunk p-3 text-xs text-ink-muted">
+          <p>
+            No metadata found{isbn ? " for that ISBN" : ""}. Fill in what you know —
+            the book still gets catalogued.
+          </p>
+          {/* The scan is never wasted: both routes carry the ISBN forward. */}
+          <p className="mt-2 flex gap-3">
+            <Link href={`/add/manual${isbn ? `?isbn=${isbn}` : ""}`} className="underline">
+              More fields
+            </Link>
+            <Link href="/add/search" className="underline">
+              Search by title
+            </Link>
+          </p>
+        </div>
       ) : null}
 
       <div className="mt-4 space-y-3">

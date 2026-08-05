@@ -15,7 +15,8 @@
       "PowerShell(cd \"c:\\\\Users\\\\Muhammed suhaib\\\\Documents\\\\Everything\\\\Stacks\"; npm install -D vitest --no-audit --no-fund --loglevel=error 2>&1 | Select-Object -Last 5; \"EXIT=$LASTEXITCODE\")",
       "Bash(curl -s -o /tmp/gb.json -w 'status=%{http_code} bytes=%{size_download}\\\\n' 'https://www.googleapis.com/books/v1/volumes?q=isbn:9788172234980&maxResults=1&printType=books')",
       "Read(//tmp/**)",
-      "Bash(curl -s -o /tmp/gb2.json -w 'status=%{http_code} bytes=%{size_download}\\\\n' -H 'user-agent: Stacks/1.0 \\(personal book catalog\\)' -H 'accept: application/json' 'https://www.googleapis.com/books/v1/volumes?q=isbn:9788172234980&maxResults=1&printType=books')"
+      "Bash(curl -s -o /tmp/gb2.json -w 'status=%{http_code} bytes=%{size_download}\\\\n' -H 'user-agent: Stacks/1.0 \\(personal book catalog\\)' -H 'accept: application/json' 'https://www.googleapis.com/books/v1/volumes?q=isbn:9788172234980&maxResults=1&printType=books')",
+      "PowerShell(cd \"c:\\\\Users\\\\Muhammed suhaib\\\\Documents\\\\Everything\\\\Stacks\"; npm install html5-qrcode --no-audit --no-fund --loglevel=error 2>&1 | Select-Object -Last 4; \"EXIT=$LASTEXITCODE\")"
     ]
   }
 }

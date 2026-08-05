@@ -1,14 +1,7 @@
-import { AddNav } from "@/components/book/AddNav";
-import { IsbnAdd } from "./IsbnAdd";
+import { AddEntry } from "./AddEntry";
 
-export const metadata = { title: "Add by ISBN · Stacks" };
+export const metadata = { title: "Scan a book · Stacks" };
 
 export default function AddPage() {
-  return (
-    <>
-      <h1 className="font-display text-3xl font-semibold tracking-tight">Add a book</h1>
-      <AddNav />
-      <IsbnAdd />
-    </>
-  );
+  return <AddEntry />;
 }
