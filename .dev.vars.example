@@ -1,0 +1,11 @@
+# Copy to .dev.vars (gitignored) and fill with values from:
+#   node scripts/gen-secrets.mjs
+#
+# SESSION_SECRET and APP_PASSPHRASE_HASH are coupled — the hash is keyed by the
+# session secret. Regenerate both together, never one alone.
+
+SESSION_SECRET=""
+APP_PASSPHRASE_HASH=""
+
+# Optional. Raises the Google Books quota; the app works without it.
+GOOGLE_BOOKS_KEY=""

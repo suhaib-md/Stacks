@@ -4,7 +4,9 @@ A single-user personal book catalog. Scan the barcode on a book you own, it look
 
 Built as a PWA so one codebase serves the phone (where cataloging happens) and the laptop (where browsing and editing happen).
 
-**Status:** Pre-implementation. Documentation complete, Phase 0 not started.
+**Status:** Phase 0 complete and deployed. Phase 1 (metadata lookup & manual add) is next.
+
+**Live:** https://stacks.suhaib-muhammed2002.workers.dev
 
 ---
 
@@ -122,6 +124,18 @@ Status-transition side effects (`started_at`, `finished_at`, `current_page` rese
 
 ---
 
+## Platform gotchas already paid for
+
+These cost real debugging time in Phase 0. Don't undo them.
+
+- **Never add the `global_fetch_strictly_public` compat flag.** OpenNext's router reaches the server function via the Worker's own hostname; that flag forces the request out to the public internet and every dynamic route 404s with Cloudflare error 1042. `wrangler dev` does *not* enforce the flag, so it looks fine locally and breaks only once deployed.
+- **Stay on `middleware.ts`, not Next 16's `proxy.ts`.** Proxy is Node-runtime-only ("Proxy does not support Edge runtime") and `@opennextjs/cloudflare` rejects Node middleware outright. The build-time deprecation warning is the price of an app that builds. Revisit when the adapter supports Node proxy.
+- **`wrangler secret put` needs a redeploy to take effect.** Setting a secret the running version has never seen leaves it invisible to `getCloudflareContext().env` until the next `wrangler deploy`. The symptom is a correct passphrase returning `SERVER_MISCONFIGURED`.
+- **`wrangler types` overwrites `cloudflare-env.d.ts` and derives secret names from `.dev.vars`.** Don't hand-edit that file, and don't run `cf-typegen` without `.dev.vars` present or the secret types vanish.
+- **Occasional D1 `7403` on remote commands is transient.** Retry before investigating account permissions.
+
+---
+
 ## Things that are easy to get wrong here
 
 - **Camera stream leaks.** Stop the stream on unmount and on route change. A camera that stays live after navigation drains the phone and is invisible on desktop testing.
@@ -146,6 +160,8 @@ Don't build these without asking. The backlog and its priority order are in [doc
 
 ## Current phase
 
-**Phase 0 — Project setup & deployment skeleton.** See [docs/implementation-plan.md](docs/implementation-plan.md#phase-0--project-setup--deployment-skeleton).
+**Phase 1 — Metadata lookup & manual add.** See [docs/implementation-plan.md](docs/implementation-plan.md#phase-1--metadata-lookup--manual-add).
 
-Exit criteria: a deployed URL that asks for a passphrase, accepts it, and renders an empty library page backed by a real remote D1 query.
+Exit criteria: add 10 real books by typed ISBN and by search, with correct metadata, and a repeat ISBN blocked with a working link to the existing entry.
+
+Phase 0 is done: deployed, passphrase-gated, remote D1 queried from a live page. `/api/health` is the deploy smoke test.

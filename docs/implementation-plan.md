@@ -7,21 +7,26 @@ Six phases. Each has a goal, a task list, and an exit criterion that is a *demon
 
 ---
 
-## Phase 0 — Project setup & deployment skeleton
+## Phase 0 — Project setup & deployment skeleton ✅ COMPLETE
 
 **Goal:** "Hello world" deployed on Cloudflare with D1 wired up and login working.
 
-- [ ] **0.1** Init Next.js (App Router, TypeScript, Tailwind). Init git repo, push to remote.
-- [ ] **0.2** Configure Cloudflare deployment via `@opennextjs/cloudflare`; write `wrangler.jsonc`; confirm a local `wrangler dev` build serves the app.
-- [ ] **0.3** Create the D1 database (`stacks-db`), bind as `DB` locally and remotely, and prove the binding works from a route handler (`SELECT 1`).
-- [ ] **0.4** Set up Drizzle: `src/db/schema.ts`, `drizzle.config.ts`, generate the first migration (`books` + indexes + CHECK constraints), apply locally then remotely.
-- [ ] **0.5** Minimal auth: `/login` page, `POST /api/auth/login` verifying the passphrase against a hash, signed HMAC session cookie, middleware gating everything except `/login` and static assets. Preserve the requested path through login.
-- [ ] **0.6** Base layout and design tokens: self-hosted Fraunces (subset, variable), CSS custom properties for both themes wired into Tailwind, app shell with the mobile bottom tab bar and desktop top nav.
-- [ ] **0.7** CI: Cloudflare Git integration deploying on push to `main`.
+- [x] **0.1** Init Next.js (App Router, TypeScript, Tailwind). Init git repo.
+- [x] **0.2** Configure Cloudflare deployment via `@opennextjs/cloudflare`; write `wrangler.jsonc`; confirm a local `wrangler dev` build serves the app.
+- [x] **0.3** Create the D1 database (`stacks-db`, APAC), bind as `DB` locally and remotely, and prove the binding works from a route handler (`/api/health`).
+- [x] **0.4** Set up Drizzle: `src/db/schema.ts`, `drizzle.config.ts`, first migration (`books`, `lookup_cache`, `settings`, `auth_attempts` + indexes + CHECK constraints), applied locally then remotely.
+- [x] **0.5** Minimal auth: `/login` page, `POST /api/auth/login` verifying the passphrase against a keyed hash, signed HMAC session cookie, D1-backed login throttle, middleware gating everything except `/login` and static assets. Requested path preserved through login.
+- [x] **0.6** Base layout and design tokens: Fraunces via `next/font`, CSS custom properties for both themes wired into Tailwind v4 `@theme inline`, app shell with mobile bottom tab bar and desktop top nav, pre-paint theme bootstrap.
+- [x] **0.7** Deployed to `https://stacks.suhaib-muhammed2002.workers.dev` via `wrangler deploy`.
 
-**Exit:** A deployed URL that asks for a passphrase, accepts it, and renders an empty library page backed by a real remote D1 query.
+**Exit — met.** Verified against the live URL: unauthenticated `/` → 307 to `/login`; `/api/health` → 401; wrong passphrase → 401; correct passphrase → 200 + `HttpOnly; Secure; SameSite=lax` cookie; `/api/health` with session → `{"ok":true,"database":"connected","books":0}`; `/` with session → 200 rendering the empty-library state. Tampered and forged cookies rejected; throttle trips on the 9th bad attempt.
 
-**Watch for:** the adapter and `wrangler.jsonc` fighting each other on Node compatibility flags — resolve it now, not in Phase 3 when a real feature is blocked.
+**What actually bit us** (all recorded in [CLAUDE.md](../CLAUDE.md#platform-gotchas-already-paid-for)):
+- `global_fetch_strictly_public` broke every dynamic route in production with error 1042 while passing locally.
+- Next 16's `proxy.ts` is Node-only and the adapter rejects it — stayed on `middleware.ts`.
+- Secrets set after a deploy stay invisible until the next `wrangler deploy`.
+
+**Still open:** Cloudflare Git integration for deploy-on-push is not wired up; deploys are currently manual via `npm run deploy`.
 
 ---
 

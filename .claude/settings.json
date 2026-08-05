@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(node --version)",
+      "PowerShell(npm --version)",
+      "PowerShell(npx wrangler --version 2>$null)",
+      "PowerShell(npx wrangler whoami 2>&1)",
+      "PowerShell(Get-ChildItem -Force \"c:\\\\Users\\\\Muhammed suhaib\\\\Documents\\\\Everything\\\\Stacks\\\\scaffoldtmp\" -Recurse -File | ForEach-Object { $_.FullName.Replace\\(\"c:\\\\Users\\\\Muhammed suhaib\\\\Documents\\\\Everything\\\\Stacks\\\\scaffoldtmp\\\\\",\"\"\\) })",
+      "PowerShell(npm view @opennextjs/cloudflare version)",
+      "PowerShell(npm view @opennextjs/cloudflare peerDependencies --json)",
+      "PowerShell(npm install 2>&1)",
+      "PowerShell(npm run typecheck 2>&1)",
+      "PowerShell(npm run build 2>&1)",
+      "PowerShell(npx opennextjs-cloudflare build 2>&1)"
+    ]
+  }
+}

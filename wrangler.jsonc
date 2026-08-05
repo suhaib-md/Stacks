@@ -1,0 +1,36 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "stacks",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2025-09-01",
+  // Do NOT add "global_fetch_strictly_public": OpenNext's router fetches the
+  // server function via the Worker's own hostname, which that flag forces out to
+  // the public internet — every dynamic route then 404s with Cloudflare error
+  // 1042. Local `wrangler dev` does not enforce it, so this only shows up once
+  // deployed.
+  "compatibility_flags": ["nodejs_compat"],
+
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+
+  "observability": {
+    "enabled": true
+  },
+
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "stacks-db",
+      "database_id": "a63a11b9-3ebb-4811-8ffc-4f7c602bd3ed",
+      "migrations_dir": "drizzle"
+    }
+  ]
+
+  // Secrets are NOT declared here. Set them with:
+  //   wrangler secret put SESSION_SECRET
+  //   wrangler secret put APP_PASSPHRASE_HASH
+  //   wrangler secret put GOOGLE_BOOKS_KEY   (optional)
+  // For local dev they live in .dev.vars (gitignored).
+}
