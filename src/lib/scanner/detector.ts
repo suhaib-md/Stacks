@@ -112,9 +112,87 @@ export const CAMERA_CONSTRAINTS: MediaStreamConstraints = {
     facingMode: { ideal: "environment" },
     width: { ideal: 1280 },
     height: { ideal: 720 },
-  },
+    // Ask for continuous autofocus up front. Without it some devices hand back a
+    // fixed-focus stream, which simply cannot resolve a barcode held close.
+    // Not in the standard typings, hence the cast at the end.
+    advanced: [{ focusMode: "continuous" }],
+  } as unknown as MediaTrackConstraints,
   audio: false,
 };
+
+// --- focus ------------------------------------------------------------------
+// focusMode and pointsOfInterest are MediaTrackConstraints extensions: real and
+// widely implemented on Android Chrome, absent from the DOM typings, and absent
+// from some cameras entirely. Every helper reports whether it actually worked.
+
+type FocusCapabilities = MediaTrackCapabilities & {
+  focusMode?: string[];
+  pointsOfInterest?: unknown;
+};
+
+export type FocusSupport = { continuous: boolean; tapToFocus: boolean };
+
+export function focusSupport(stream: MediaStream | null): FocusSupport {
+  const track = stream?.getVideoTracks()[0];
+  if (!track?.getCapabilities) return { continuous: false, tapToFocus: false };
+  try {
+    const caps = track.getCapabilities() as FocusCapabilities;
+    const modes = caps.focusMode ?? [];
+    return {
+      continuous: modes.includes("continuous"),
+      // Needs a point to aim at AND a mode that acts on it.
+      tapToFocus:
+        "pointsOfInterest" in caps &&
+        (modes.includes("single-shot") || modes.includes("manual") || modes.includes("continuous")),
+    };
+  } catch {
+    return { continuous: false, tapToFocus: false };
+  }
+}
+
+async function applyFocus(
+  stream: MediaStream | null,
+  constraint: Record<string, unknown>,
+): Promise<boolean> {
+  const track = stream?.getVideoTracks()[0];
+  if (!track) return false;
+  try {
+    await track.applyConstraints({ advanced: [constraint] } as unknown as MediaTrackConstraints);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export async function enableContinuousFocus(stream: MediaStream | null): Promise<boolean> {
+  return applyFocus(stream, { focusMode: "continuous" });
+}
+
+/**
+ * Focus at a point, given in normalized 0–1 coordinates of the video frame.
+ *
+ * Drops back to continuous afterwards so the camera keeps tracking once you
+ * move to the next book — a one-shot focus that never re-engages is worse than
+ * no tap-to-focus at all.
+ */
+export async function focusAtPoint(
+  stream: MediaStream | null,
+  x: number,
+  y: number,
+): Promise<boolean> {
+  const clampedX = Math.min(1, Math.max(0, x));
+  const clampedY = Math.min(1, Math.max(0, y));
+
+  const ok =
+    (await applyFocus(stream, {
+      pointsOfInterest: [{ x: clampedX, y: clampedY }],
+      focusMode: "single-shot",
+    })) ||
+    // Some cameras reject single-shot but honour the point under continuous.
+    (await applyFocus(stream, { pointsOfInterest: [{ x: clampedX, y: clampedY }] }));
+
+  return ok;
+}
 
 // --- feedback ---------------------------------------------------------------
 

@@ -7,6 +7,9 @@ import {
   beep,
   createNativeDetector,
   detectSupport,
+  enableContinuousFocus,
+  focusAtPoint,
+  focusSupport,
   setTorch,
   stopStream,
   supportsTorch,
@@ -57,6 +60,9 @@ export function Scanner({
   const [torchOn, setTorchOn] = useState(false);
   const [torchAvailable, setTorchAvailable] = useState(false);
   const [stalled, setStalled] = useState(false);
+  const [tapFocusAvailable, setTapFocusAvailable] = useState(false);
+  /** Where to draw the focus ring, in percentages of the video box. */
+  const [focusRing, setFocusRing] = useState<{ x: number; y: number } | null>(null);
 
   // "Starting camera…" forever is the least debuggable failure there is, and it
   // can only be reproduced on a real device. After 8s, say which path we took.
@@ -65,6 +71,14 @@ export function Scanner({
     const timer = setTimeout(() => setStalled(true), 8000);
     return () => clearTimeout(timer);
   }, [phase.kind]);
+
+  // Fade the focus ring out. Keyed on object identity, so tapping the same spot
+  // twice restarts it.
+  useEffect(() => {
+    if (!focusRing) return;
+    const timer = setTimeout(() => setFocusRing(null), 900);
+    return () => clearTimeout(timer);
+  }, [focusRing]);
 
   // Keep refs current without restarting the camera when these props change.
   useEffect(() => {
@@ -140,6 +154,12 @@ export function Scanner({
           }
           streamRef.current = stream;
           setTorchAvailable(supportsTorch(stream));
+
+          // Some cameras ignore the constraint passed to getUserMedia but accept
+          // it applied to the live track, so ask a second time.
+          const focus = focusSupport(stream);
+          if (focus.continuous) void enableContinuousFocus(stream);
+          setTapFocusAvailable(focus.tapToFocus);
 
           // Read at point of use: by now the awaits above have let React commit
           // the render that mounts the element.
@@ -233,6 +253,36 @@ export function Scanner({
     if (ok) setTorchOn(next);
   }
 
+  /**
+   * Tap anywhere on the feed to focus there.
+   *
+   * The video is `object-fit: cover`, so the element's box and the camera frame
+   * are not the same rectangle — the overflowing axis has to be mapped back or
+   * the camera focuses somewhere other than where you tapped.
+   */
+  async function handleFocusTap(event: React.MouseEvent<HTMLDivElement>) {
+    const video = videoRef.current;
+    if (!video || !tapFocusAvailable) return;
+
+    const rect = video.getBoundingClientRect();
+    if (rect.width === 0 || rect.height === 0) return;
+
+    const tapX = (event.clientX - rect.left) / rect.width;
+    const tapY = (event.clientY - rect.top) / rect.height;
+
+    // Undo the crop that object-fit: cover applies.
+    const frameW = video.videoWidth || rect.width;
+    const frameH = video.videoHeight || rect.height;
+    const scale = Math.max(rect.width / frameW, rect.height / frameH);
+    const shownW = frameW * scale;
+    const shownH = frameH * scale;
+    const x = (tapX * rect.width + (shownW - rect.width) / 2) / shownW;
+    const y = (tapY * rect.height + (shownH - rect.height) / 2) / shownH;
+
+    setFocusRing({ x: tapX * 100, y: tapY * 100 });
+    await focusAtPoint(streamRef.current, x, y);
+  }
+
   if (phase.kind === "unsupported") return null;
 
   return (
@@ -253,6 +303,28 @@ export function Scanner({
           kind === "fallback" ? "" : "hidden"
         }`}
       />
+
+      {/* Tap layer sits above the video but before the chrome in DOM order, so
+          the buttons still win the click without needing z-index juggling. */}
+      {phase.kind === "scanning" && tapFocusAvailable ? (
+        <div className="absolute inset-0" onClick={handleFocusTap} aria-hidden="true" />
+      ) : null}
+
+      {focusRing ? (
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute size-16 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-accent motion-safe:animate-[focusPulse_900ms_ease-out]"
+          style={{ left: `${focusRing.x}%`, top: `${focusRing.y}%` }}
+        >
+          <style>{`
+            @keyframes focusPulse {
+              0%   { transform: translate(-50%,-50%) scale(1.5); opacity: 0 }
+              25%  { transform: translate(-50%,-50%) scale(1);   opacity: 1 }
+              100% { transform: translate(-50%,-50%) scale(1);   opacity: 0 }
+            }
+          `}</style>
+        </div>
+      ) : null}
 
       {phase.kind === "scanning" ? (
         <Viewfinder paused={paused} />
