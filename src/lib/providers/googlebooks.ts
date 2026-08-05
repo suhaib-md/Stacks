@@ -2,7 +2,7 @@ import { toIsbn13 } from "@/lib/isbn";
 import {
   type BookMetadata,
   fetchJson,
-  int,
+  positiveInt,
   str,
   strArray,
   toHttps,
@@ -68,7 +68,7 @@ export function mapGoogleVolume(item: unknown): BookMetadata | null {
     authors: strArray(info.authors),
     publisher: str(info.publisher),
     publishedYear: yearFrom(info.publishedDate),
-    pageCount: int(info.pageCount),
+    pageCount: positiveInt(info.pageCount),
     description: str(info.description),
     coverUrl,
     categories: strArray(info.categories).slice(0, 8),

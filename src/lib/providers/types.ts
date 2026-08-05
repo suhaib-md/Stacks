@@ -69,6 +69,18 @@ export function int(value: unknown): number | null {
   return null;
 }
 
+/**
+ * For counts, where 0 means "the provider doesn't know", not "zero pages".
+ *
+ * Both APIs return `pageCount: 0` for plenty of records. Treating that as a real
+ * value is doubly wrong: it fails the `min(1)` validator on save, and because 0
+ * isn't null it beats the other provider's real page count during the merge.
+ */
+export function positiveInt(value: unknown): number | null {
+  const parsed = int(value);
+  return parsed !== null && parsed > 0 ? parsed : null;
+}
+
 export function strArray(value: unknown): string[] {
   if (!Array.isArray(value)) return [];
   return value.map(str).filter((v): v is string => v !== null);

@@ -80,6 +80,16 @@ describe("mergeMetadata", () => {
     expect(merged?.authors).toEqual(["Someone"]);
   });
 
+  it("lets Google's real page count through when Open Library reported none", () => {
+    // The mappers normalize a provider's 0 to null precisely so this works —
+    // otherwise Open Library's 0 would win and the real count would be lost.
+    const merged = mergeMetadata(
+      base({ pageCount: null }),
+      base({ pageCount: 224, source: "googlebooks" }),
+    );
+    expect(merged?.pageCount).toBe(224);
+  });
+
   it("keeps the Open Library cover, which matches the physical edition", () => {
     const merged = mergeMetadata(
       base({ coverUrl: "https://covers.openlibrary.org/b/id/1-L.jpg" }),

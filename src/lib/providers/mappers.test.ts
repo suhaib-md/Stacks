@@ -69,6 +69,14 @@ describe("mapOpenLibrary", () => {
     expect(result?.isbn10).toBe("0306406152");
   });
 
+  it("treats number_of_pages 0 as unknown", () => {
+    const result = mapOpenLibrary(
+      { [`ISBN:${ISBN}`]: { title: "Zero Pages", number_of_pages: 0 } },
+      ISBN,
+    );
+    expect(result?.pageCount).toBeNull();
+  });
+
   it("ignores malformed author and publisher entries", () => {
     const result = mapOpenLibrary(
       {
@@ -126,6 +134,16 @@ describe("mapGoogleVolume", () => {
     expect(result?.coverUrl).toBe(
       "https://books.google.com/books/content?id=1&zoom=1",
     );
+  });
+
+  it("treats pageCount 0 as unknown, not as zero pages", () => {
+    // Real case: 9780345391803 (Hitchhiker's Guide) returns 0. Kept as 0 it
+    // fails the min(1) validator on save AND beats the other provider's real
+    // page count during the merge, because 0 is not null.
+    const result = mapGoogleVolume({
+      volumeInfo: { title: "Hitch Hiker's Guide", pageCount: 0 },
+    });
+    expect(result?.pageCount).toBeNull();
   });
 
   it("returns null without volumeInfo or title", () => {
