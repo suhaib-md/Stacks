@@ -27,7 +27,13 @@ const nullableText = (max: number) =>
 export const createBookSchema = z.object({
   isbn13: z.string().trim().nullish(),
   isbn10: z.string().trim().nullish(),
-  title: z.string().trim().min(1, "A title is required.").max(500),
+  // `error` covers the missing-field case too; .min() alone only fires once the
+  // value is already a string, so an absent title got Zod's raw type message.
+  title: z
+    .string({ error: "A title is required." })
+    .trim()
+    .min(1, "A title is required.")
+    .max(500),
   subtitle: nullableText(500),
   authors: z.array(z.string().trim().min(1).max(200)).max(30).default([]),
   publisher: nullableText(300),

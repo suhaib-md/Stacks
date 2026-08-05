@@ -4,7 +4,7 @@ A single-user personal book catalog. Scan the barcode on a book you own, it look
 
 Built as a PWA so one codebase serves the phone (where cataloging happens) and the laptop (where browsing and editing happen).
 
-**Status:** Phase 0 complete and deployed. Phase 1 (metadata lookup & manual add) is next.
+**Status:** Phases 0 and 1 complete and deployed. Phase 2 (barcode scanner) is next.
 
 **Live:** https://stacks.suhaib-muhammed2002.workers.dev
 
@@ -141,7 +141,8 @@ These cost real debugging time in Phase 0. Don't undo them.
 - **Camera stream leaks.** Stop the stream on unmount and on route change. A camera that stays live after navigation drains the phone and is invisible on desktop testing.
 - **The manual path is not a fallback.** Regional and older Indian-market editions are frequently missing from both APIs. Manual entry is a first-class flow, always one tap from the scanner, with any scanned ISBN prefilled. A scan that finds nothing must never be a dead end.
 - **`isbn13` uniqueness is a database constraint, not just a pre-check.** The pre-check exists for a good error message; the constraint exists for correctness.
-- **Every lookup gets cached**, including "not found" (with a 7-day TTL). This is what keeps Google Books within quota.
+- **Lookup cache TTLs are tiered, not binary.** Complete results never expire; thin results and misses get a 7-day recheck. Caching a thin result forever freezes a provider outage into the record permanently. A stale entry is still served as a fallback when the re-fetch also fails — never discard good data because a provider is down today.
+- **Google Books' keyless quota is exhausted in practice** — anonymous requests share one project and return 429. Everything still works via Open Library, but descriptions and search ranking need a `GOOGLE_BOOKS_KEY`. See [docs/implementation-plan.md](docs/implementation-plan.md#google-books-key).
 - **Lookup timeouts degrade, never throw.** 4 s per provider, no retries. The confirm sheet opens with whatever was found — including nothing.
 - **Cover CORS.** Many cover hosts don't send CORS headers, which breaks canvas color extraction. Fail silently to the neutral accent; don't log on every detail view.
 - **CSV escaping.** Notes contain commas, quotes, and newlines. RFC 4180 quoting with doubled inner quotes, UTF-8 BOM for Excel.
@@ -160,8 +161,10 @@ Don't build these without asking. The backlog and its priority order are in [doc
 
 ## Current phase
 
-**Phase 1 — Metadata lookup & manual add.** See [docs/implementation-plan.md](docs/implementation-plan.md#phase-1--metadata-lookup--manual-add).
+**Phase 2 — Barcode scanner & rapid scan loop.** See [docs/implementation-plan.md](docs/implementation-plan.md#phase-2--barcode-scanner--rapid-scan-loop).
 
-Exit criteria: add 10 real books by typed ISBN and by search, with correct metadata, and a repeat ISBN blocked with a working link to the existing entry.
+The scanner feeds the Phase 1 pipeline — it is a faster input method, not a new path. It reuses `/api/lookup/isbn/:isbn` and the existing `ConfirmSheet` unchanged; `/add` becomes the camera with ISBN entry and search as the always-visible escape hatches.
 
-Phase 0 is done: deployed, passphrase-gated, remote D1 queried from a live page. `/api/health` is the deploy smoke test.
+Exit criteria: catalogue one full cabinet in a single sitting without touching the keyboard except for oddball books.
+
+Done so far: Phase 0 (deployed, passphrase-gated, remote D1, `/api/health` as the deploy smoke test) and Phase 1 (lookup, merge, tiered cache, dedup, three add paths, 78 unit tests).

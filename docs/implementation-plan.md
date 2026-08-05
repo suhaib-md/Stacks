@@ -30,21 +30,41 @@ Six phases. Each has a goal, a task list, and an exit criterion that is a *demon
 
 ---
 
-## Phase 1 — Metadata lookup & manual add
+## Phase 1 — Metadata lookup & manual add ✅ BUILT
 
 **Goal:** You can add a book by typing an ISBN or searching a title, with metadata auto-filled. This is the data pipeline; the camera is just a faster input method for it.
 
-- [ ] **1.1** ISBN utilities in `src/lib/isbn.ts`: strip hyphens/spaces, validate ISBN-10 and ISBN-13 checksums, convert 10 ↔ 13, normalize to 13 for storage. Unit-test against a table of real ISBNs including `X` check digits.
-- [ ] **1.2** `GET /api/lookup/isbn/:isbn` — check `lookup_cache`; Open Library fetch + mapper; Google Books fallback + mapper; merge per the TRD strategy; write result (positive or negative) to cache. 4 s timeout per provider, graceful degradation, no retries.
-- [ ] **1.3** `GET /api/lookup/search?q=` — Google Books primary, Open Library fallback, top 10 results mapped to `BookMetadata`.
-- [ ] **1.4** `POST /api/books` with dedup: exact `isbn13` → 409 `DUPLICATE_ISBN` with the existing id; fuzzy title+author → create with a `POSSIBLE_DUPLICATE` warning in the response.
-- [ ] **1.5** Add flow UI without the camera: ISBN text input → confirm sheet → save; search box → result list → confirm sheet; `/add/manual` blank form for books with no ISBN.
-- [ ] **1.6** Confirm sheet component (built once, used by every add path): cover preview, inline-editable title and authors, format picker, status defaulting to Unread, Save and Skip.
-- [ ] **1.7** Plain library list page — unstyled is fine — purely to verify what was saved.
+- [x] **1.1** ISBN utilities in `src/lib/isbn.ts`: validation, 10 ↔ 13 conversion, normalization to bare ISBN-13. Non-Bookland EAN-13s rejected, so a cereal barcode never reaches a lookup.
+- [x] **1.2** `GET /api/lookup/isbn/:isbn` — cache → Open Library → Google Books (only when the first result is thin) → merge → cache the outcome. 4 s per provider, no retries, degrades to null rather than throwing.
+- [x] **1.3** `GET /api/lookup/search?q=` — Google Books primary, Open Library fallback, 10 results.
+- [x] **1.4** `POST /api/books` with dedup: exact `isbn13` → 409 with the existing id; same title+author → 201 with a non-blocking `POSSIBLE_DUPLICATE` warning.
+- [x] **1.5** Add flow UI: `/add` ISBN entry, `/add/search`, `/add/manual`.
+- [x] **1.6** One `ConfirmSheet` used by every add path, reset per book via `key` rather than an effect.
+- [x] **1.7** Library list + a minimal `/book/[id]` so saved data is verifiable.
 
-**Exit:** Add 10 real books from your cabinets by typed ISBN and by search. Metadata is correct. Re-scanning one of them is blocked with a working link.
+**Exit — still to do by hand:** add 10 real books from your cabinets by typed ISBN and by search. The paths are all verified end to end; what remains is your actual shelf.
 
-**Watch for:** Open Library's response shape varies by edition — some records lack `number_of_pages` or return authors in an unexpected form. Write the mappers defensively and record real fixtures as you find odd ones.
+**Verified locally:** real lookups for Roald Dahl, Le Guin, Harari, and an Indian-market Alchemist edition (`9788172234980`); hyphenated re-add caught as a duplicate; same-title-different-author correctly *not* flagged; 78 unit tests over the ISBN maths, mappers, merge, cache policy, and dedup.
+
+### Two things learned building it
+
+- **The Google Books keyless quota is exhausted in practice.** Anonymous requests share one project and it returns 429 all day. The fallback works — lookups degrade to Open Library — but descriptions and good search ranking need a `GOOGLE_BOOKS_KEY`. See [§Google Books key](#google-books-key).
+- **Cache TTLs had to become tiered.** Caching a positive result forever meant a provider outage got frozen into the record permanently. Now: complete → never expires; thin or missing → 7-day recheck; and a stale entry is still served as a fallback when the re-fetch also fails.
+
+**Watch for:** Open Library's response shape varies by edition — records lack `number_of_pages`, or return authors in odd shapes. The mappers coerce defensively and `mappers.test.ts` pins the ragged cases.
+
+---
+
+## Google Books key
+
+Optional, but the difference between a sparse catalogue and a good one. Without it, descriptions are usually absent and search falls back to Open Library's weaker ranking.
+
+1. Google Cloud console → create a project → enable the **Books API**.
+2. Credentials → create an **API key** → restrict it to the Books API.
+3. `npx wrangler secret put GOOGLE_BOOKS_KEY`, then redeploy (secrets stay invisible to the running version until the next deploy).
+4. Add it to `.dev.vars` for local work.
+
+Free tier is 1,000 requests/day, and every lookup is cached, so a full cabinet costs well under that.
 
 ---
 
