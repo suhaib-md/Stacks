@@ -45,6 +45,15 @@ export function Scanner({
   const [kind, setKind] = useState<DetectorKind>("unsupported");
   const [torchOn, setTorchOn] = useState(false);
   const [torchAvailable, setTorchAvailable] = useState(false);
+  const [stalled, setStalled] = useState(false);
+
+  // "Starting camera…" forever is the least debuggable failure there is, and it
+  // can only be reproduced on a real device. After 8s, say which path we took.
+  useEffect(() => {
+    if (phase.kind !== "requesting") return;
+    const timer = setTimeout(() => setStalled(true), 8000);
+    return () => clearTimeout(timer);
+  }, [phase.kind]);
 
   // Keep refs current without restarting the camera when these props change.
   useEffect(() => {
@@ -80,9 +89,10 @@ export function Scanner({
     let timer: ReturnType<typeof setTimeout> | null = null;
     // Populated only on the fallback path so cleanup can tear it down.
     let fallback: { stop: () => Promise<void> } | null = null;
-    // Captured now rather than read in cleanup, where the ref may already point
-    // somewhere else.
-    const videoEl = videoRef.current;
+    // Assigned once we actually attach a stream, and used by cleanup. NOT read
+    // from the ref up here: on the first commit the element may not exist yet,
+    // and capturing null then silently kills the whole start sequence.
+    let attachedVideo: HTMLVideoElement | null = null;
 
     async function start() {
       const support = await detectSupport();
@@ -109,11 +119,15 @@ export function Scanner({
           streamRef.current = stream;
           setTorchAvailable(supportsTorch(stream));
 
-          const video = videoEl;
+          // Read at point of use: by now the awaits above have let React commit
+          // the render that mounts the element.
+          const video = videoRef.current;
           if (!video) {
             stopStream(stream);
+            setPhase({ kind: "denied", message: "The video surface failed to mount." });
             return;
           }
+          attachedVideo = video;
           video.srcObject = stream;
           await video.play().catch(() => {});
           if (cancelled) return;
@@ -184,7 +198,7 @@ export function Scanner({
       // released here or the camera light stays on and the battery drains.
       cancelled = true;
       if (timer) clearTimeout(timer);
-      if (videoEl) videoEl.srcObject = null;
+      if (attachedVideo) attachedVideo.srcObject = null;
       stopStream(streamRef.current);
       streamRef.current = null;
       void fallback?.stop().catch(() => {});
@@ -201,17 +215,22 @@ export function Scanner({
 
   return (
     <div className="absolute inset-0 bg-black">
-      {kind === "native" ? (
-        <video
-          ref={videoRef}
-          playsInline
-          muted
-          autoPlay
-          className="h-full w-full object-cover"
-        />
-      ) : (
-        <div id={FALLBACK_ELEMENT_ID} className="h-full w-full [&_video]:h-full [&_video]:w-full [&_video]:object-cover" />
-      )}
+      {/* Both surfaces are always mounted. Rendering them conditionally on
+          `kind` meant the element didn't exist when the effect first ran, which
+          left the whole start sequence stuck. */}
+      <video
+        ref={videoRef}
+        playsInline
+        muted
+        autoPlay
+        className={`h-full w-full object-cover ${kind === "fallback" ? "hidden" : ""}`}
+      />
+      <div
+        id={FALLBACK_ELEMENT_ID}
+        className={`h-full w-full [&_video]:h-full [&_video]:w-full [&_video]:object-cover ${
+          kind === "fallback" ? "" : "hidden"
+        }`}
+      />
 
       {phase.kind === "scanning" ? (
         <Viewfinder paused={paused} />
@@ -224,6 +243,16 @@ export function Scanner({
               <p className="mt-3 text-xs text-ink-faint">
                 You can still add books by ISBN or by searching — the buttons below
                 work either way.
+              </p>
+            </div>
+          ) : stalled ? (
+            <div className="max-w-xs rounded-card bg-surface p-5">
+              <p className="font-display text-lg">Camera didn&apos;t start</p>
+              <p className="mt-2 text-sm text-ink-muted">
+                Try reloading. If it keeps happening, the buttons below still work.
+              </p>
+              <p className="mt-3 font-mono text-[11px] text-ink-faint">
+                detector: {kind} · phase: {phase.kind}
               </p>
             </div>
           ) : (
