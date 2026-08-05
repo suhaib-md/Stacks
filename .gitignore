@@ -1,0 +1,40 @@
+# dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# next.js
+.next/
+out/
+build/
+next-env.d.ts
+
+# cloudflare
+.wrangler/
+.open-next/
+.dev.vars
+.dev.vars.*
+
+# env
+.env
+.env.*
+!.env.example
+
+# local d1 / sqlite
+*.sqlite
+*.sqlite3
+*.db
+backup*.sql
+
+# testing
+coverage/
+
+# misc
+.DS_Store
+Thumbs.db
+*.pem
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.vercel
+*.tsbuildinfo

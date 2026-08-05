@@ -1,0 +1,168 @@
+# Stacks — Implementation Plan (v1)
+
+**Companion to:** [PRD](prd.md) · [TRD](trd.md)
+**Last updated:** 2026-08-05
+
+Six phases. Each has a goal, a task list, and an exit criterion that is a *demonstration*, not a checkbox. The app is genuinely usable for real cataloging from the end of Phase 2 — everything after that is making it pleasant.
+
+---
+
+## Phase 0 — Project setup & deployment skeleton
+
+**Goal:** "Hello world" deployed on Cloudflare with D1 wired up and login working.
+
+- [ ] **0.1** Init Next.js (App Router, TypeScript, Tailwind). Init git repo, push to remote.
+- [ ] **0.2** Configure Cloudflare deployment via `@opennextjs/cloudflare`; write `wrangler.jsonc`; confirm a local `wrangler dev` build serves the app.
+- [ ] **0.3** Create the D1 database (`stacks-db`), bind as `DB` locally and remotely, and prove the binding works from a route handler (`SELECT 1`).
+- [ ] **0.4** Set up Drizzle: `src/db/schema.ts`, `drizzle.config.ts`, generate the first migration (`books` + indexes + CHECK constraints), apply locally then remotely.
+- [ ] **0.5** Minimal auth: `/login` page, `POST /api/auth/login` verifying the passphrase against a hash, signed HMAC session cookie, middleware gating everything except `/login` and static assets. Preserve the requested path through login.
+- [ ] **0.6** Base layout and design tokens: self-hosted Fraunces (subset, variable), CSS custom properties for both themes wired into Tailwind, app shell with the mobile bottom tab bar and desktop top nav.
+- [ ] **0.7** CI: Cloudflare Git integration deploying on push to `main`.
+
+**Exit:** A deployed URL that asks for a passphrase, accepts it, and renders an empty library page backed by a real remote D1 query.
+
+**Watch for:** the adapter and `wrangler.jsonc` fighting each other on Node compatibility flags — resolve it now, not in Phase 3 when a real feature is blocked.
+
+---
+
+## Phase 1 — Metadata lookup & manual add
+
+**Goal:** You can add a book by typing an ISBN or searching a title, with metadata auto-filled. This is the data pipeline; the camera is just a faster input method for it.
+
+- [ ] **1.1** ISBN utilities in `src/lib/isbn.ts`: strip hyphens/spaces, validate ISBN-10 and ISBN-13 checksums, convert 10 ↔ 13, normalize to 13 for storage. Unit-test against a table of real ISBNs including `X` check digits.
+- [ ] **1.2** `GET /api/lookup/isbn/:isbn` — check `lookup_cache`; Open Library fetch + mapper; Google Books fallback + mapper; merge per the TRD strategy; write result (positive or negative) to cache. 4 s timeout per provider, graceful degradation, no retries.
+- [ ] **1.3** `GET /api/lookup/search?q=` — Google Books primary, Open Library fallback, top 10 results mapped to `BookMetadata`.
+- [ ] **1.4** `POST /api/books` with dedup: exact `isbn13` → 409 `DUPLICATE_ISBN` with the existing id; fuzzy title+author → create with a `POSSIBLE_DUPLICATE` warning in the response.
+- [ ] **1.5** Add flow UI without the camera: ISBN text input → confirm sheet → save; search box → result list → confirm sheet; `/add/manual` blank form for books with no ISBN.
+- [ ] **1.6** Confirm sheet component (built once, used by every add path): cover preview, inline-editable title and authors, format picker, status defaulting to Unread, Save and Skip.
+- [ ] **1.7** Plain library list page — unstyled is fine — purely to verify what was saved.
+
+**Exit:** Add 10 real books from your cabinets by typed ISBN and by search. Metadata is correct. Re-scanning one of them is blocked with a working link.
+
+**Watch for:** Open Library's response shape varies by edition — some records lack `number_of_pages` or return authors in an unexpected form. Write the mappers defensively and record real fixtures as you find odd ones.
+
+---
+
+## Phase 2 — Barcode scanner & rapid scan loop
+
+**Goal:** Point the phone at a book, scan, confirm in one tap, scan the next. After this phase the app is usable for its actual purpose.
+
+- [ ] **2.1** Feature-detect `BarcodeDetector` with `EAN-13` support; dynamically import `html5-qrcode` only when absent, so devices with native support never download it.
+- [ ] **2.2** Scanner screen: camera permission request and denial handling, viewfinder overlay, torch toggle where `ImageCapture` reports support, always-visible manual-entry and search links.
+- [ ] **2.3** Detection handling: 2500 ms same-code debounce, ISBN checksum validation before lookup, silent rejection of non-book EAN-13s, beep + `navigator.vibrate(50)` on an accepted read.
+- [ ] **2.4** Wire the scan result into the Phase 1 confirm sheet → save → auto-dismiss → camera resumes without user action.
+- [ ] **2.5** Not-found path: offer manual search, or the manual form with the scanned ISBN prefilled. The scan is never wasted.
+- [ ] **2.6** Session counter pill ("12 added this session").
+- [ ] **2.7** Test on the actual phone and on a laptop webcam. Verify camera stream release on unmount and on route change.
+
+**Exit:** Catalog one full cabinet in a single sitting without touching the keyboard except for oddball books.
+
+**Watch for:** stream leaks. A camera that stays on after navigation is the most likely bug in this phase and the easiest to miss on desktop.
+
+---
+
+## Phase 3 — Library UI: cover grid, search, detail page
+
+**Goal:** The app looks and feels like *your* library. The biggest UI chunk by a wide margin.
+
+- [ ] **3.1** Cover grid: responsive columns per the UI spec, locked 2:3 aspect ratio, lazy loading, skeleton placeholders, generated fallback tile for missing covers (title + author on a hash-derived color).
+- [ ] **3.2** List view toggle: compact rows (thumb, title, author, status chip, rating), persisted to `localStorage`.
+- [ ] **3.3** Status visual language on tiles: Reading ribbon, Finished check badge, Unread unadorned, DNF muted.
+- [ ] **3.4** Search bar (title / author / notes), filter chips (status, genre, format), sort menu — all server-driven through `/api/books` query params and reflected in the URL.
+- [ ] **3.5** Book detail page: client-side dominant-color extraction on first view cached to `cover_color`, gradient header, metadata block, description.
+- [ ] **3.6** Edit form and delete with confirm.
+- [ ] **3.7** Empty states (first-run vs. filtered-empty, visually distinct) and loading states on every route.
+- [ ] **3.8** Bulk edit mode: long-press or checkbox multi-select → set status, add tag, delete; applied via a single batched `PATCH /api/books/bulk`.
+
+**Exit:** Browsing feels good on the phone. Any book is findable in under 5 seconds.
+
+**Watch for:** cover hosts that don't send CORS headers will break canvas color extraction — detect and fall back to the neutral accent silently rather than logging errors on every detail view.
+
+---
+
+## Phase 4 — Reading features
+
+**Goal:** Track what you're reading and what you've read.
+
+- [ ] **4.1** Status transitions with automatic dates, enforced server-side in the PATCH handler (Reading → `started_at`; Finished → `finished_at` + rating prompt; Unread → reset `current_page`).
+- [ ] **4.2** Page progress: −10 / +10 / +25 quick actions plus direct numeric entry, clamped to `page_count`, optimistic progress bar.
+- [ ] **4.3** Currently Reading strip on home: cover, progress bar, tap-to-update without leaving the page.
+- [ ] **4.4** Rating stars and notes editor on the detail page, both autosaving (rating on tap, notes on 1 s idle and on blur) with a visible saved indicator and retry on failure.
+- [ ] **4.5** Finished filter defaulting to `finished_at DESC` — the reading-history view.
+
+**Exit:** Your active read sits at the top of home with a live progress bar, updatable in two taps.
+
+---
+
+## Phase 5 — PWA, offline, polish, export
+
+**Goal:** Installable, resilient, and safe.
+
+- [ ] **5.1** Web manifest (name, icons at 192/512/512-maskable, theme color, standalone display) and an install affordance driven by `beforeinstallprompt`.
+- [ ] **5.2** Serwist service worker: precache the app shell, stale-while-revalidate the library list so "do I own this?" works in a bookstore. No write queue — writes require network, and the UI says so.
+- [ ] **5.3** Dark mode: warm amber-on-charcoal palette, system preference with a manual override, no flash of wrong theme on load.
+- [ ] **5.4** `GET /api/export/csv` streaming route + Settings button. RFC 4180 escaping, UTF-8 BOM, `; `-joined arrays.
+- [ ] **5.5** Performance pass: image sizing, bundle audit against the 150 KB budget, pagination at 60/page, virtualization only if the library exceeds ~300 books.
+- [ ] **5.6** Final QA: scanner on Android Chrome, iOS Safari, and desktop; both lookup fallbacks; dedup; auth expiry; offline list; CSV opened in Sheets and Excel.
+
+**Exit:** Installed on the phone home screen. Full cabinet catalog exported as a CSV backup that opens cleanly.
+
+---
+
+## Phase 6 — Backlog (post-v1, rough priority)
+
+1. Stats page — read vs. unread, genre donut, books per year
+2. TBR queue with drag-to-reorder
+3. "Pick for me" — random unread shuffle with filters
+4. Reading-day heatmap / streaks
+5. Quotes capture with OCR
+6. AI shelf-photo bulk import
+7. Lending tracker, wishlist, series tracking, Year in Books
+
+None of these require changing v1's schema — see [backend-schema.md §8](backend-schema.md#8-future-schema-post-v1-not-built).
+
+---
+
+## Effort map
+
+| Phase | Estimate |
+|---|---|
+| 0 — Setup | One evening |
+| 1 — Lookup & manual add | One weekend |
+| 2 — Scanner | 2–3 evenings |
+| 3 — Library UI | One weekend (largest) |
+| 4 — Reading features | 2 evenings |
+| 5 — PWA & polish | One weekend |
+
+Roughly 3–4 weekends at side-project pace to a polished v1, with the app usable for real cataloging from the end of Phase 2.
+
+---
+
+## Dependency order
+
+```
+Phase 0 ──► Phase 1 ──► Phase 2 ──► Phase 3 ──► Phase 4 ──► Phase 5
+              │                        │
+              └── the confirm sheet ───┘
+                  built in 1.6 is reused
+                  by 2.4 and 3.x — build
+                  it once, properly
+```
+
+Phase 3 could technically run in parallel with Phase 2, but doing Phase 2 first means you start accumulating real books, and real data makes every Phase 3 decision better than lorem-ipsum ever would.
+
+---
+
+## Definition of done (per task)
+
+1. Works on phone and desktop.
+2. Loading, empty, and error states handled — not just the happy path.
+3. Server-side validation exists for anything the UI validates.
+4. No TypeScript errors, no console errors.
+5. Deployed and verified on the live URL, not only locally.
+
+---
+
+## Related documents
+
+- [PRD](prd.md) · [TRD](trd.md) · [App Flow](app-flow.md) · [UI/UX Spec](uiux.md) · [Backend Schema](backend-schema.md)
