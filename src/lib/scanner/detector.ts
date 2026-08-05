@@ -9,10 +9,45 @@
 
 export type DetectorKind = "native" | "fallback" | "unsupported";
 
+export type DetectedCode = {
+  rawValue: string;
+  format: string;
+  boundingBox?: { x: number; y: number; width: number; height: number };
+};
+
 /** Minimal shape of the native API; TS has no lib types for it yet. */
 type NativeBarcodeDetector = {
-  detect: (source: CanvasImageSource) => Promise<Array<{ rawValue: string; format: string }>>;
+  detect: (source: CanvasImageSource) => Promise<DetectedCode[]>;
 };
+
+/**
+ * Order candidates by how close they are to the centre of the frame.
+ *
+ * Book barcodes rarely appear alone: house editions carry an EAN-5 price add-on
+ * beside the ISBN, shops add their own sticker, and a second book is often in
+ * shot. Whatever you have aimed at is the one you meant, so centre-most wins.
+ */
+export function rankByCentrality(
+  codes: DetectedCode[],
+  frameWidth: number,
+  frameHeight: number,
+): string[] {
+  if (frameWidth <= 0 || frameHeight <= 0) return codes.map((c) => c.rawValue);
+
+  const cx = frameWidth / 2;
+  const cy = frameHeight / 2;
+
+  const distance = (code: DetectedCode): number => {
+    const box = code.boundingBox;
+    // No box means no basis to rank it; send it to the back rather than guess.
+    if (!box) return Number.POSITIVE_INFINITY;
+    const bx = box.x + box.width / 2;
+    const by = box.y + box.height / 2;
+    return (bx - cx) ** 2 + (by - cy) ** 2;
+  };
+
+  return [...codes].sort((a, b) => distance(a) - distance(b)).map((c) => c.rawValue);
+}
 
 type BarcodeDetectorCtor = {
   new (options?: { formats?: string[] }): NativeBarcodeDetector;

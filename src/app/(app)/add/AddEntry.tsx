@@ -63,14 +63,20 @@ export function AddEntry() {
   }, []);
 
   const onDetect = useCallback(
-    (rawValue: string): boolean => {
-      // Non-book EAN-13s (groceries, magazines) are rejected silently, and the
-      // scanner only beeps once we return true — a chirp followed by nothing
-      // reads as a broken app.
-      const isbn13 = parseIsbn(rawValue)?.isbn13;
-      if (!isbn13 || !isValidIsbn(rawValue)) return false;
-      void runLookup(isbn13);
-      return true;
+    (rawValues: string[]): boolean => {
+      // Take the first candidate that is genuinely a book ISBN. The frame often
+      // holds more than one code — house editions carry an EAN-5 price add-on
+      // beside the ISBN, and shops add their own sticker — so the ISBN is not
+      // reliably the first thing detected.
+      for (const rawValue of rawValues) {
+        if (!isValidIsbn(rawValue)) continue;
+        const isbn13 = parseIsbn(rawValue)?.isbn13;
+        if (!isbn13) continue;
+        void runLookup(isbn13);
+        return true;
+      }
+      // Nothing here is a book. Stay silent and keep scanning.
+      return false;
     },
     [runLookup],
   );

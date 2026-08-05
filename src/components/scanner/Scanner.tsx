@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -10,6 +10,7 @@ import {
   enableContinuousFocus,
   focusAtPoint,
   focusSupport,
+  rankByCentrality,
   setTorch,
   stopStream,
   supportsTorch,
@@ -35,8 +36,11 @@ export function Scanner({
 }: {
   /** True while the confirm sheet is open: stop detecting, keep the stream warm. */
   paused: boolean;
-  /** Returns true if the code was accepted and a lookup started. */
-  onDetect: (rawValue: string) => boolean;
+  /**
+   * Receives every code found in the frame, centre-most first. Returns true if
+   * one of them was accepted and a lookup started.
+   */
+  onDetect: (rawValues: string[]) => boolean;
   onUnsupported: () => void;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -101,20 +105,25 @@ export function Scanner({
   }, [onDetect]);
 
   /** Debounce, forward, and only then confirm. Cameras fire many frames per barcode. */
-  const handleRaw = useCallback((rawValue: string) => {
+  const handleCodes = useCallback((rawValues: string[]) => {
     // One lookup at a time, enforced without waiting for a React render.
-    if (busyRef.current) return;
+    if (busyRef.current || rawValues.length === 0) return;
 
     const now = Date.now();
     const last = lastCodeRef.current;
-    if (last && last.value === rawValue && now - last.at < SAME_CODE_COOLDOWN_MS) return;
+    // Cooldown applies to the whole candidate set: re-reading the same book's
+    // barcode alongside its price add-on must not count as something new.
+    const candidates = rawValues.filter(
+      (value) => !(last && last.value === value && now - last.at < SAME_CODE_COOLDOWN_MS),
+    );
+    if (candidates.length === 0) return;
 
-    // Feedback comes AFTER the caller accepts it. Beeping first meant a grocery
+    // Feedback comes AFTER the caller accepts one. Beeping first meant a grocery
     // barcode chirped and then silently did nothing, which reads as a bug.
-    const accepted = onDetectRef.current(rawValue);
+    const accepted = onDetectRef.current(candidates);
     if (!accepted) return;
 
-    lastCodeRef.current = { value: rawValue, at: now };
+    lastCodeRef.current = { value: candidates[0], at: now };
     busyRef.current = true;
     beep();
     vibrate(50);
@@ -188,7 +197,14 @@ export function Scanner({
             if (!pausedRef.current && video.readyState >= 2) {
               try {
                 const codes = await detector.detect(video);
-                if (!cancelled && codes.length > 0) handleRaw(codes[0].rawValue);
+                if (!cancelled && codes.length > 0) {
+                  // Pass every code, centre-most first. Taking only codes[0]
+                  // meant a price add-on or shop sticker could mask the ISBN
+                  // sitting right beside it.
+                  handleCodes(
+                    rankByCentrality(codes, video.videoWidth, video.videoHeight),
+                  );
+                }
               } catch {
                 // A single failed frame is not worth surfacing; keep scanning.
               }
@@ -219,7 +235,9 @@ export function Scanner({
           { facingMode: "environment" },
           { fps: 10, qrbox: { width: 260, height: 160 } },
           (decoded) => {
-            if (!pausedRef.current) handleRaw(decoded);
+            // The fallback decodes one symbol at a time, so there is only ever
+            // one candidate to offer.
+            if (!pausedRef.current) handleCodes([decoded]);
           },
           () => {
             // Fires constantly for "no code in this frame". Not an error.
@@ -245,7 +263,7 @@ export function Scanner({
       streamRef.current = null;
       void fallback?.stop().catch(() => {});
     };
-  }, [handleRaw, onUnsupported]);
+  }, [handleCodes, onUnsupported]);
 
   async function toggleTorch() {
     const next = !torchOn;
