@@ -202,7 +202,25 @@ Failure is non-fatal in every case — the page falls back to the neutral theme 
 | Grid first contentful paint (300 books) | < 1 s |
 | Barcode detected → confirm sheet visible | < 1.5 s |
 | Cached ISBN lookup | < 100 ms |
-| JS transferred on library route | < 150 KB gzipped |
+| App JS on the library route, above framework baseline | < 40 KB gzipped |
+
+### The JS budget was wrong, and here is the measurement
+
+This originally read "< 150 KB gzipped on the library route". That target is **not achievable on this stack** and was written before anything was measured.
+
+Measured on a production build (Phase 5):
+
+| Route | Eager JS (gzipped) | Notes |
+|---|---|---|
+| `/login` | **169 KB** | One input and a button. This is the floor. |
+| `/settings` | 174 KB | Theme toggle, install prompt, sign-out |
+| `/` | 193 KB | Cover grid, toolbar, currently-reading, bulk edit |
+
+React 19 plus the Next 16 App Router runtime costs **169 KB before a single line of application code**. A 150 KB total was never reachable without abandoning the framework, which is not a trade worth making for a single-user catalogue.
+
+So the budget is now expressed against the baseline: **the library route may add at most 40 KB over `/login`.** It currently adds 24 KB for the entire browsing experience, which is the number actually worth defending.
+
+Getting there took real work — moving the bulk-edit dialogs and the progress sheet behind `next/dynamic` cut the library route from 258 KB to 193 KB, because none of it is needed until you long-press a cover or tap a progress bar.
 
 Techniques: server-rendered lists, `loading="lazy"` plus explicit dimensions on cover images (prevents layout shift), dynamic import of the scanner fallback, pagination at 60 per page with virtualization only if the library exceeds ~300 books.
 

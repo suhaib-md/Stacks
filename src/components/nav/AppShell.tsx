@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { OfflineBanner } from "@/components/pwa/OfflineBanner";
+import { ServiceWorker } from "@/components/pwa/ServiceWorker";
 import { BottomTabs, TopNav } from "./Navigation";
 
 /**
@@ -19,10 +21,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       {/* pb-20 clears the mobile tab bar; md:pb-8 drops it once the bar is gone. */}
       <main className="mx-auto w-full max-w-7xl flex-1 px-4 pb-20 pt-4 md:pb-8">
+        <OfflineBanner />
         {children}
       </main>
 
       <BottomTabs />
+      <ServiceWorker />
     </div>
   );
 }

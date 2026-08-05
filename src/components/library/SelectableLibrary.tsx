@@ -1,22 +1,22 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
 import { CoverTile } from "@/components/book/CoverTile";
 import { ListRow } from "@/components/book/ListRow";
-import { Sheet } from "@/components/ui/Sheet";
 import { Toast, type ToastMessage } from "@/components/ui/Toast";
-import { READ_STATUSES, type Book, type ReadStatus } from "@/db/schema";
+import type { Book, ReadStatus } from "@/db/schema";
+import type { BulkSheet } from "./BulkSheets";
+
+// Loaded only once you enter selection mode. Keeps three dialogs and the sheet
+// primitive out of the library's first payload.
+const BulkSheets = dynamic(() => import("./BulkSheets").then((m) => m.BulkSheets), {
+  ssr: false,
+});
 
 const GRID_CLASS =
   "grid grid-cols-3 gap-3 sm:grid-cols-4 sm:gap-4 md:grid-cols-5 lg:grid-cols-6 lg:gap-5 2xl:grid-cols-8";
-
-const STATUS_LABEL: Record<ReadStatus, string> = {
-  unread: "Unread",
-  reading: "Reading",
-  finished: "Finished",
-  dnf: "Did not finish",
-};
 
 type Mode = { active: false } | { active: true; ids: Set<string> };
 
@@ -27,10 +27,9 @@ type Mode = { active: false } | { active: true; ids: Set<string> };
 export function SelectableLibrary({ books, view }: { books: Book[]; view: "grid" | "list" }) {
   const router = useRouter();
   const [mode, setMode] = useState<Mode>({ active: false });
-  const [sheet, setSheet] = useState<null | "status" | "tag" | "delete">(null);
+  const [sheet, setSheet] = useState<BulkSheet | null>(null);
   const [pending, setPending] = useState(false);
   const [toast, setToast] = useState<ToastMessage | null>(null);
-  const [tagValue, setTagValue] = useState("");
 
   const dismissToast = useCallback(() => setToast(null), []);
 
@@ -137,88 +136,19 @@ export function SelectableLibrary({ books, view }: { books: Book[]; view: "grid"
         </p>
       ) : null}
 
-      <Sheet open={sheet === "status"} onClose={() => setSheet(null)} labelledBy="bulk-status">
-        <h2 id="bulk-status" className="font-display text-lg">
-          Set status
-        </h2>
-        <p className="mt-1 text-xs text-ink-muted">
-          Applies to {selectedIds.length} {selectedIds.length === 1 ? "book" : "books"}.
-        </p>
-        <div className="mt-4 space-y-2">
-          {READ_STATUSES.map((status) => (
-            <button
-              key={status}
-              type="button"
-              disabled={pending}
-              onClick={() =>
-                apply({ readStatus: status }, (n) => `Set ${n} to ${STATUS_LABEL[status]}`)
-              }
-              className="min-h-11 w-full rounded-card bg-surface-sunk px-4 text-left text-sm font-medium disabled:opacity-50"
-            >
-              {STATUS_LABEL[status]}
-            </button>
-          ))}
-        </div>
-      </Sheet>
-
-      <Sheet open={sheet === "tag"} onClose={() => setSheet(null)} labelledBy="bulk-tag">
-        <h2 id="bulk-tag" className="font-display text-lg">
-          Add a tag
-        </h2>
-        <p className="mt-1 text-xs text-ink-muted">
-          Added to {selectedIds.length} {selectedIds.length === 1 ? "book" : "books"}. Existing
-          tags are kept.
-        </p>
-        <form
-          onSubmit={(event) => {
-            event.preventDefault();
-            const tag = tagValue.trim();
-            if (!tag) return;
-            setTagValue("");
-            void apply({ addTags: [tag] }, (n) => `Tagged ${n} with "${tag}"`);
-          }}
-          className="mt-4"
-        >
-          <input
-            value={tagValue}
-            onChange={(e) => setTagValue(e.target.value)}
-            placeholder="e.g. cabinet-one"
-            aria-label="Tag"
-            className="w-full rounded-card bg-surface-sunk px-4 py-3 text-sm outline-none ring-accent focus:ring-2"
-          />
-          <button
-            type="submit"
-            disabled={pending || tagValue.trim().length === 0}
-            className="mt-4 min-h-11 w-full rounded-card bg-accent px-4 text-sm font-medium text-paper disabled:opacity-50"
-          >
-            Add tag
-          </button>
-        </form>
-      </Sheet>
-
-      <Sheet open={sheet === "delete"} onClose={() => setSheet(null)} labelledBy="bulk-delete">
-        <h2 id="bulk-delete" className="font-display text-lg">
-          Delete {selectedIds.length} {selectedIds.length === 1 ? "book" : "books"}?
-        </h2>
-        <p className="mt-2 text-sm text-ink-muted">This can&apos;t be undone.</p>
-        <div className="mt-6 flex gap-3">
-          <button
-            type="button"
-            onClick={() => setSheet(null)}
-            className="min-h-11 flex-1 rounded-card border border-rule px-4 text-sm font-medium"
-          >
-            Keep them
-          </button>
-          <button
-            type="button"
-            onClick={removeSelected}
-            disabled={pending}
-            className="min-h-11 flex-1 rounded-card bg-danger px-4 text-sm font-medium text-paper disabled:opacity-50"
-          >
-            {pending ? "Deleting..." : "Delete"}
-          </button>
-        </div>
-      </Sheet>
+      {mode.active ? (
+        <BulkSheets
+          sheet={sheet}
+          count={selectedIds.length}
+          pending={pending}
+          onClose={() => setSheet(null)}
+          onSetStatus={(status: ReadStatus, label: string) =>
+            void apply({ readStatus: status }, (n) => `Set ${n} to ${label}`)
+          }
+          onAddTag={(tag: string) => void apply({ addTags: [tag] }, (n) => `Tagged ${n} with "${tag}"`)}
+          onDelete={() => void removeSelected()}
+        />
+      ) : null}
 
       <Toast message={toast} onDismiss={dismissToast} />
     </>
