@@ -4,7 +4,7 @@ A single-user personal book catalog. Scan the barcode on a book you own, it look
 
 Built as a PWA so one codebase serves the phone (where cataloging happens) and the laptop (where browsing and editing happen).
 
-**Status:** Phases 0–4 built and deployed. Phase 5 (PWA, offline, polish, export) is next — the last one before v1.
+**Status:** v1 feature-complete. Phases 0–5 built and deployed; what remains is your own device QA and a full cabinet catalogued.
 
 **Live:** https://stacks.suhaib-muhammed2002.workers.dev
 
@@ -153,6 +153,8 @@ These cost real debugging time in Phase 0. Don't undo them.
 - **Lookup timeouts degrade, never throw.** 4 s per provider, no retries. The confirm sheet opens with whatever was found — including nothing.
 - **Cover CORS.** Many cover hosts don't send CORS headers, which breaks canvas color extraction. Fail silently to the neutral accent; don't log on every detail view.
 - **CSV escaping.** Notes contain commas, quotes, and newlines. RFC 4180 quoting with doubled inner quotes, UTF-8 BOM for Excel.
+- **The service worker must never cache a redirected response.** An unauthenticated request to `/` follows a 307 to `/login`, and `fetch` reports that as a successful 200. Cache it and the login page is served under `/` to a signed-in user, offline, permanently. `isCacheable()` in [public/sw.js](public/sw.js) guards this.
+- **Never cache auth, `/add`, or exports.** A cached session decision is a bug, a scanner with no lookup is a false promise, and a stale backup is worse than no backup.
 - **The confirm sheet is one component.** Scan, search, and manual paths all use it. Fix bugs in one place.
 - **Applied migrations are immutable.** Fix forward with a new migration. Back up before anything destructive.
 
@@ -168,14 +170,13 @@ Don't build these without asking. The backlog and its priority order are in [doc
 
 ## Current phase
 
-**Phase 5 — PWA, offline, polish, export.** See [docs/implementation-plan.md](docs/implementation-plan.md#phase-5--pwa-offline-polish-export).
+**v1 is feature-complete.** All six phases are built, deployed, and verified in production. 131 unit tests.
 
-Manifest and icons, a Serwist service worker caching the app shell and last library list (so "do I own this?" works in a bookstore), the dark-mode pass, CSV export, and the performance pass.
+What's left is not code:
+- Catalogue a full cabinet in one sitting — the real exit criterion, and the thing most likely to surface remaining rough edges
+- Install to the phone home screen and confirm the library reads with the network off
+- Open an exported CSV in Sheets or Excel
 
-Exit criteria: installed on the phone home screen; a full cabinet exported as a CSV backup that opens cleanly.
-
-Done so far: Phase 0 (deployed, passphrase-gated, remote D1, `/api/health` smoke test), Phase 1 (lookup, merge, tiered cache, dedup, three add paths), Phase 2 (scanner + rapid loop), Phase 3 (cover grid, filters, detail, edit, delete, bulk), Phase 4 (reading controls, tap-to-update, reading history). 113 unit tests.
-
-**Carried into Phase 5:** eager JS is ~173 KB gzipped on the library route against the TRD's 150 KB budget — task 5.5 is where that gets addressed.
+Beyond that, [Phase 6](docs/implementation-plan.md#phase-6--backlog-post-v1-rough-priority) is the backlog: stats, TBR queue, "pick for me", streaks, quotes/OCR, lending, wishlist, series. **None of them need a v1 schema change** — check [backend-schema.md §8](docs/backend-schema.md#8-future-schema-post-v1-not-built) before assuming otherwise.
 
 **Known miss:** eager JS is ~173 KB gzipped on the library route against the TRD's 150 KB budget. Deferred to the Phase 5 performance pass.
