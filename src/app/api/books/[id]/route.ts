@@ -55,6 +55,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     "rating",
     "notes",
     "currentPage",
+    "startedAt",
+    "finishedAt",
   ] as const) {
     if (key in input && input[key] !== undefined) patch[key] = input[key];
   }
@@ -75,13 +77,18 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     }
   }
 
-  // Business rules run server-side, never only in the UI.
+  // Business rules run server-side, never only in the UI — but they are
+  // DEFAULTS. A date you typed in the same request must survive: assigning
+  // derived over the patch would silently replace "I finished this in March"
+  // with today.
   const derived = deriveStatusChanges(
     existing,
     input.readStatus,
     input.pageCount ?? existing.pageCount,
   );
-  Object.assign(patch, derived);
+  for (const [key, value] of Object.entries(derived)) {
+    if (!(key in patch)) patch[key] = value;
+  }
 
   const effectivePageCount =
     (patch.pageCount as number | null | undefined) ?? existing.pageCount;

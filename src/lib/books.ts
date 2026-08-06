@@ -32,6 +32,25 @@ const nullableText = (max: number) =>
  * blank subtitle, publisher, genre, language, description and notes on every
  * partial update.
  */
+/**
+ * A YYYY-MM-DD date, or null to clear. Absent leaves the column alone.
+ * Rejects impossible dates rather than storing "2026-13-45".
+ */
+const isoDate = z
+  .union([
+    // An emptied date input arrives as "", which must mean "clear it" rather
+    // than failing the format check.
+    z.literal("").transform(() => null),
+    z.null(),
+    z
+      .string()
+      .trim()
+      .regex(/^\d{4}-\d{2}-\d{2}$/, "Use YYYY-MM-DD.")
+      // The regex accepts 2026-13-45; ISO parsing does not.
+      .refine((v) => !Number.isNaN(Date.parse(`${v}T00:00:00Z`)), "That date doesn't exist."),
+  ])
+  .optional();
+
 const patchableText = (max: number) =>
   z
     .string()
@@ -97,6 +116,11 @@ export const updateBookSchema = z.object({
   rating: z.number().int().min(1).max(5).nullish(),
   notes: patchableText(20_000),
   currentPage: z.number().int().min(0).max(100_000).optional(),
+  // Day precision, because that is the real precision of "when did you finish
+  // this?". Editable so the automatic stamp — which is the date you catalogued
+  // the book, not the date you read it — can be corrected.
+  startedAt: isoDate,
+  finishedAt: isoDate,
   // Written by the client-side extractor on first view of a detail page, and by
   // nothing else. Not part of create: it is derived from the cover.
   coverColor: z

@@ -23,6 +23,8 @@ const Icon = ({ d }: { d: string }) => (
 const DESTINATIONS: Destination[] = [
   { href: "/", label: "Library", icon: <Icon d="M4 5h5v14H4zM11 5h4v14h-4zM17 6l3 13" /> },
   { href: "/add", label: "Add", icon: <Icon d="M3 7V5h3M21 7V5h-3M3 17v2h3M21 17v2h-3M7 12h10" /> },
+  { href: "/pick", label: "Pick", icon: <Icon d="M12 3l2.4 5.4 5.6.6-4.2 4 1.2 5.8L12 16l-5 2.8 1.2-5.8-4.2-4 5.6-.6z" /> },
+  { href: "/stats", label: "Stats", icon: <Icon d="M5 20V10M12 20V4M19 20v-7" /> },
   { href: "/settings", label: "Settings", icon: <Icon d="M12 15a3 3 0 100-6 3 3 0 000 6zM19 12l2-1-2-4-2 .6a7 7 0 00-2-1.2L14.5 4h-5L9 6.4a7 7 0 00-2 1.2L5 7 3 11l2 1-2 1 2 4 2-.6a7 7 0 002 1.2L9.5 20h5l.5-2.4a7 7 0 002-1.2l2 .6 2-4z" /> },
 ];
 

@@ -93,6 +93,24 @@ describe("updateBookSchema", () => {
     expect(updateBookSchema.parse({ notes: null }).notes).toBeNull();
     expect(updateBookSchema.parse({ notes: "" }).notes).toBeNull();
   });
+
+  it("accepts reading dates so the automatic stamp can be corrected", () => {
+    expect(updateBookSchema.parse({ finishedAt: "2026-03-14" }).finishedAt).toBe("2026-03-14");
+    expect(updateBookSchema.parse({ startedAt: null }).startedAt).toBeNull();
+    expect(updateBookSchema.parse({ startedAt: "" }).startedAt).toBeNull();
+  });
+
+  it("rejects malformed and impossible dates", () => {
+    expect(updateBookSchema.safeParse({ finishedAt: "14/03/2026" }).success).toBe(false);
+    expect(updateBookSchema.safeParse({ finishedAt: "2026-13-45" }).success).toBe(false);
+    expect(updateBookSchema.safeParse({ finishedAt: "March 2026" }).success).toBe(false);
+  });
+
+  it("leaves dates absent when not supplied", () => {
+    const parsed = updateBookSchema.parse({ title: "Kept" });
+    expect(parsed.startedAt).toBeUndefined();
+    expect(parsed.finishedAt).toBeUndefined();
+  });
 });
 
 describe("clampPage", () => {

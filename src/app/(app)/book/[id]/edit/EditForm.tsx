@@ -53,6 +53,8 @@ export function EditForm({ book }: { book: ApiBook }) {
     coverUrl: book.coverUrl ?? "",
     description: book.description ?? "",
     notes: book.notes ?? "",
+    startedAt: book.startedAt ?? "",
+    finishedAt: book.finishedAt ?? "",
   });
 
   // Kept outside `form` because it's null-or-hex rather than a text field.
@@ -105,6 +107,8 @@ export function EditForm({ book }: { book: ApiBook }) {
         rating: numberOrNull(form.rating),
         coverUrl: form.coverUrl.trim() || null,
         coverColor,
+        startedAt: form.startedAt || null,
+        finishedAt: form.finishedAt || null,
         description: form.description.trim() || null,
         notes: form.notes.trim() || null,
       }),
@@ -190,6 +194,35 @@ export function EditForm({ book }: { book: ApiBook }) {
           </select>
         </Field>
       </div>
+
+      <fieldset>
+        <legend className="mb-1 text-xs font-medium text-ink-muted">
+          Reading dates
+          <span className="ml-1 text-ink-faint">
+            (stamped automatically when you change status — correct them here)
+          </span>
+        </legend>
+        <div className="grid grid-cols-2 gap-4">
+          <Field label="Started" htmlFor="e-started">
+            <input
+              id="e-started"
+              type="date"
+              value={form.startedAt}
+              onChange={(e) => set("startedAt", e.target.value)}
+              className={inputClass}
+            />
+          </Field>
+          <Field label="Finished" htmlFor="e-finished">
+            <input
+              id="e-finished"
+              type="date"
+              value={form.finishedAt}
+              onChange={(e) => set("finishedAt", e.target.value)}
+              className={inputClass}
+            />
+          </Field>
+        </div>
+      </fieldset>
 
       <Field label="Tags" hint="(comma separated)" htmlFor="e-tags">
         <input id="e-tags" value={form.tags} onChange={(e) => set("tags", e.target.value)} className={inputClass} />
