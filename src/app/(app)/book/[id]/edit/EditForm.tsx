@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { CoverPicker } from "@/components/book/CoverPicker";
 import { BOOK_FORMATS, READ_STATUSES, type BookFormat, type ReadStatus } from "@/db/schema";
 import type { ApiBook } from "@/lib/books";
 import { isValidIsbn } from "@/lib/isbn";
@@ -54,6 +55,9 @@ export function EditForm({ book }: { book: ApiBook }) {
     notes: book.notes ?? "",
   });
 
+  // Kept outside `form` because it's null-or-hex rather than a text field.
+  const [coverColor, setCoverColor] = useState<string | null>(book.coverColor);
+
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -100,6 +104,7 @@ export function EditForm({ book }: { book: ApiBook }) {
         readStatus: form.readStatus,
         rating: numberOrNull(form.rating),
         coverUrl: form.coverUrl.trim() || null,
+        coverColor,
         description: form.description.trim() || null,
         notes: form.notes.trim() || null,
       }),
@@ -190,7 +195,15 @@ export function EditForm({ book }: { book: ApiBook }) {
         <input id="e-tags" value={form.tags} onChange={(e) => set("tags", e.target.value)} className={inputClass} />
       </Field>
 
-      <Field label="Cover URL" htmlFor="e-cover">
+      <CoverPicker
+        title={form.title}
+        authors={form.authors}
+        coverUrl={form.coverUrl}
+        value={coverColor}
+        onChange={setCoverColor}
+      />
+
+      <Field label="Cover URL" hint="(clear this to use the generated cover)" htmlFor="e-cover">
         <input id="e-cover" value={form.coverUrl} onChange={(e) => set("coverUrl", e.target.value)} className={inputClass} />
       </Field>
 

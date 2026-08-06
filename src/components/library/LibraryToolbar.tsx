@@ -34,13 +34,22 @@ function rememberView(view: string): void {
   document.cookie = `stacks-view=${view}; path=/; max-age=31536000; samesite=lax`;
 }
 
-export function LibraryToolbar({ genres }: { genres: string[] }) {
+export type GenreFacet = { name: string; count: number };
+
+/** How many genres show before "Show all" — roughly two rows on a phone. */
+const GENRE_PREVIEW = 12;
+
+export function LibraryToolbar({ genres }: { genres: GenreFacet[] }) {
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
 
   const currentQ = params.get("q") ?? "";
   const [query, setQuery] = useState(currentQ);
+  const [genresOpen, setGenresOpen] = useState(false);
+  const [showAllGenres, setShowAllGenres] = useState(false);
+
+  const activeGenre = params.get("genre");
 
   // Debounced search. Writes to the URL rather than to state, so the server
   // re-resolves the list and the history entry is meaningful.
@@ -162,18 +171,50 @@ export function LibraryToolbar({ genres }: { genres: string[] }) {
         {genres.length > 0 ? (
           <>
             <span aria-hidden="true" className="w-px shrink-0 self-stretch bg-rule" />
-            {genres.map((genre) => (
-              <Chip
-                key={genre}
-                active={params.get("genre") === genre}
-                onClick={() => toggle("genre", genre)}
-              >
-                {genre}
-              </Chip>
-            ))}
+            {/* Genres live behind a disclosure. Providers hand back dozens of
+                catalogue headings per shelf, and rendering them all buried the
+                library under its own filters. */}
+            <Chip active={Boolean(activeGenre) || genresOpen} onClick={() => setGenresOpen((v) => !v)}>
+              {activeGenre ?? "Genre"}
+              <span aria-hidden="true" className="ml-1 opacity-60">
+                {genresOpen ? "▲" : "▼"}
+              </span>
+            </Chip>
           </>
         ) : null}
       </div>
+
+      {genresOpen && genres.length > 0 ? (
+        <div className="rounded-card bg-surface-sunk p-3">
+          <div className="flex flex-wrap gap-2">
+            {(showAllGenres ? genres : genres.slice(0, GENRE_PREVIEW)).map((genre) => (
+              <Chip
+                key={genre.name}
+                active={activeGenre === genre.name}
+                onClick={() => {
+                  toggle("genre", genre.name);
+                  setGenresOpen(false);
+                }}
+              >
+                {genre.name}
+                <span className="ml-1.5 tabular opacity-50">{genre.count}</span>
+              </Chip>
+            ))}
+          </div>
+
+          {genres.length > GENRE_PREVIEW ? (
+            <button
+              type="button"
+              onClick={() => setShowAllGenres((v) => !v)}
+              className="mt-2 text-xs font-medium text-accent"
+            >
+              {showAllGenres
+                ? "Show fewer"
+                : `Show all ${genres.length} genres`}
+            </button>
+          ) : null}
+        </div>
+      ) : null}
 
       <div className="flex items-center gap-2">
         <label htmlFor="sort" className="text-xs text-ink-muted">

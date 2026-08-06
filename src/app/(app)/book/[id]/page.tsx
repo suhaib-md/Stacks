@@ -78,6 +78,7 @@ export default async function BookDetailPage({
                 src={book.coverUrl}
                 title={book.title}
                 authors={formatAuthors(book.authors)}
+                coverColor={book.coverColor}
                 className="h-full w-full"
               />
             </div>

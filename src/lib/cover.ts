@@ -11,9 +11,58 @@ export function titleColor(title: string): string {
     hash = (hash * 31 + title.charCodeAt(i)) | 0;
   }
   const hue = Math.abs(hash) % 360;
+  // Hex, not hsl(): every colour in this module has to be shadeable, and shade()
+  // parses hex. Returning an hsl() string made gradients silently flat.
   // Held in a muted band so a wall of generated tiles reads as cloth spines
   // rather than a colour chart, and stays legible under white text.
-  return `hsl(${hue} 28% 38%)`;
+  return hslToHex(hue / 360, 0.28, 0.38);
+}
+
+/**
+ * Hand-picked backgrounds for generated covers.
+ *
+ * Older and regional editions frequently have no cover art anywhere, so a
+ * chosen colour is often the only art a book will ever have. All are dark
+ * enough to carry white text, and held in one saturation band so a shelf of
+ * them looks like a set rather than a paint chart.
+ */
+export const COVER_PALETTE: ReadonlyArray<{ name: string; hex: string }> = [
+  { name: "Leather", hex: "#8a5a2b" },
+  { name: "Clay", hex: "#8a4436" },
+  { name: "Wine", hex: "#6b2f3a" },
+  { name: "Plum", hex: "#553350" },
+  { name: "Ink", hex: "#2f3b52" },
+  { name: "Teal", hex: "#2b5555" },
+  { name: "Forest", hex: "#3a5a45" },
+  { name: "Moss", hex: "#556033" },
+  { name: "Ochre", hex: "#8a6b2b" },
+  { name: "Slate", hex: "#414d57" },
+];
+
+/** Shift a hex colour's lightness. Positive lightens, negative darkens. */
+export function shade(hex: string, delta: number): string {
+  const match = /^#?([0-9a-f]{6})$/i.exec(hex.trim());
+  if (!match) return hex;
+
+  const int = Number.parseInt(match[1], 16);
+  const [h, s, l] = rgbToHsl((int >> 16) & 255, (int >> 8) & 255, int & 255);
+  return hslToHex(h, s, Math.min(1, Math.max(0, l + delta)));
+}
+
+/**
+ * The background for a generated cover: a soft vertical gradient rather than a
+ * flat fill, which reads as cloth or board instead of a colour swatch.
+ */
+export function generatedCoverBackground(base: string): string {
+  return `linear-gradient(155deg, ${shade(base, 0.08)} 0%, ${base} 52%, ${shade(base, -0.07)} 100%)`;
+}
+
+/** The colour a book gets when you haven't chosen one. */
+export function effectiveCoverColor(
+  coverColor: string | null | undefined,
+  title: string,
+): string {
+  return coverColor ?? titleColor(title);
 }
 
 /**

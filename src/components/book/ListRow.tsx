@@ -52,7 +52,13 @@ export function ListRow({
             book.readStatus === "dnf" ? "opacity-55 saturate-50" : ""
           }`}
         >
-          <CoverImage src={book.coverUrl} title={book.title} authors={authors} className="h-full w-full" />
+          <CoverImage
+            src={book.coverUrl}
+            title={book.title}
+            authors={authors}
+            coverColor={book.coverColor}
+            className="h-full w-full"
+          />
         </div>
 
         <span className="min-w-0 flex-1">

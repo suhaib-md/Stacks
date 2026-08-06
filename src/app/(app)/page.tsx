@@ -50,15 +50,20 @@ export default async function LibraryPage({
       .offset((filters.page - 1) * filters.perPage),
     db.select({ total: sql<number>`count(*)` }).from(books).where(where),
     db.select().from(books).where(eq(books.readStatus, "reading")).orderBy(desc(books.updatedAt)),
+    // Ordered by how many books carry each genre, so the useful ones surface
+    // first and the long tail of catalogue headings sinks.
     db
-      .selectDistinct({ genre: books.genre })
+      .select({ genre: books.genre, count: sql<number>`count(*)` })
       .from(books)
       .where(isNotNull(books.genre))
-      .orderBy(books.genre),
+      .groupBy(books.genre)
+      .orderBy(sql`count(*) desc`, books.genre),
   ]);
 
   const total = counted[0]?.total ?? 0;
-  const genres = genreRows.map((r) => r.genre).filter((g): g is string => Boolean(g));
+  const genres = genreRows
+    .map((r) => ({ name: r.genre as string, count: r.count }))
+    .filter((g) => Boolean(g.name));
   const filtered = hasActiveFilters(filters);
   const totalPages = Math.max(1, Math.ceil(total / filters.perPage));
 

@@ -42,7 +42,26 @@ describe("mapOpenLibrary", () => {
       source: "openlibrary",
     });
     expect(result?.coverUrl).toBe("https://covers.openlibrary.org/b/id/1-L.jpg");
-    expect(result?.categories).toEqual(["Structural engineering", "Materials"]);
+  });
+
+  it("never turns catalogue subjects into genres", () => {
+    // LCSH headings are not genres. Letting these through produced filter chips
+    // like "Alice (fictitious character : carroll), fiction" and buried the
+    // library under its own facets.
+    const result = mapOpenLibrary(
+      {
+        [`ISBN:${ISBN}`]: {
+          title: "Subject Soup",
+          subjects: [
+            { name: "Alice (fictitious character : carroll), fiction" },
+            { name: "Viajes alrededor del mundo" },
+            { name: "desertion" },
+          ],
+        },
+      },
+      ISBN,
+    );
+    expect(result?.categories).toEqual([]);
   });
 
   it("returns null when the ISBN key is absent (a miss)", () => {

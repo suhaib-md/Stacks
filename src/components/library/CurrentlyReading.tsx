@@ -48,6 +48,7 @@ export function CurrentlyReading({ books }: { books: Book[] }) {
                     src={book.coverUrl}
                     title={book.title}
                     authors={authors}
+                    coverColor={book.coverColor}
                     className="h-full w-full"
                   />
                 </div>

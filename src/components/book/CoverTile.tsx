@@ -73,6 +73,7 @@ export function CoverTile({
           src={book.coverUrl}
           title={book.title}
           authors={authors}
+          coverColor={book.coverColor}
           sizes="(max-width: 480px) 33vw, (max-width: 768px) 25vw, (max-width: 1024px) 20vw, 16vw"
           className="h-full w-full"
         />

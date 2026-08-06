@@ -52,13 +52,18 @@ export function mapOpenLibrary(raw: unknown, isbn13: string): BookMetadata | nul
     ? str(asRec(record.publishers[0])?.name)
     : null;
 
-  // subjects: [{ name, url }]
-  const categories = Array.isArray(record.subjects)
-    ? record.subjects
-        .map((s) => str(asRec(s)?.name))
-        .filter((v): v is string => v !== null)
-        .slice(0, 8)
-    : [];
+  /*
+   * Open Library `subjects` are deliberately NOT mapped to categories.
+   *
+   * They are LCSH catalogue headings, not genres: a single shelf yields
+   * "Alice (fictitious character : carroll), fiction", "Adult children of aging
+   * parents", "Viajes alrededor del mundo", "desertion". Feeding those into the
+   * genre facet buried the library under thirty-odd useless filter chips.
+   *
+   * Genre comes from Google Books' BISAC-style vocabulary or from you. When
+   * neither has one, null is the honest answer.
+   */
+  const categories: string[] = [];
 
   const cover = asRec(record.cover);
   const coverUrl =
