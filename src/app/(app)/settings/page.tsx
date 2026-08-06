@@ -1,7 +1,10 @@
 import { sql } from "drizzle-orm";
 import { getDb } from "@/db";
 import { books } from "@/db/schema";
+import { isIncomplete } from "@/lib/refresh";
+import { ChangePassphrase } from "./ChangePassphrase";
 import { InstallPrompt } from "./InstallPrompt";
+import { RefreshSweep } from "./RefreshSweep";
 import { SignOutButton } from "./SignOutButton";
 import { ThemeToggle } from "./ThemeToggle";
 
@@ -28,6 +31,23 @@ export default async function SettingsPage() {
 
   const total = totals[0]?.total ?? 0;
 
+  // Only the id and title cross to the client — the sweep doesn't need more.
+  const candidates = await db
+    .select({
+      id: books.id,
+      title: books.title,
+      isbn13: books.isbn13,
+      description: books.description,
+      pageCount: books.pageCount,
+      coverUrl: books.coverUrl,
+      publisher: books.publisher,
+    })
+    .from(books);
+
+  const incomplete = candidates
+    .filter(isIncomplete)
+    .map(({ id, title }) => ({ id, title }));
+
   return (
     <>
       <h1 className="font-display text-3xl font-semibold tracking-tight">Settings</h1>
@@ -42,6 +62,11 @@ export default async function SettingsPage() {
                 .join(" · ")}`
             : ""}
         </p>
+      </section>
+
+      <section className="mt-8 border-t border-rule pt-6">
+        <h2 className="text-sm font-medium">Fill in missing details</h2>
+        <RefreshSweep candidates={incomplete} />
       </section>
 
       <section className="mt-8 border-t border-rule pt-6">
@@ -73,6 +98,11 @@ export default async function SettingsPage() {
       <section className="mt-8 border-t border-rule pt-6">
         <h2 className="text-sm font-medium">Theme</h2>
         <ThemeToggle />
+      </section>
+
+      <section className="mt-8 border-t border-rule pt-6">
+        <h2 className="text-sm font-medium">Passphrase</h2>
+        <ChangePassphrase />
       </section>
 
       <section className="mt-8 border-t border-rule pt-6">

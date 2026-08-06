@@ -4,10 +4,12 @@ import { notFound } from "next/navigation";
 import { CoverColorProbe } from "@/components/book/CoverColorProbe";
 import { CoverImage } from "@/components/book/CoverImage";
 import { ReadingPanel } from "@/components/book/ReadingPanel";
+import { RefreshMetadata } from "@/components/book/RefreshMetadata";
 import { getDb } from "@/db";
 import { books } from "@/db/schema";
 import { formatAuthors, parseStringArray } from "@/db/serde";
 import { toApiBook } from "@/lib/books";
+import { isIncomplete } from "@/lib/refresh";
 import { BookActions } from "./BookActions";
 
 export const dynamic = "force-dynamic";
@@ -110,6 +112,8 @@ export default async function BookDetailPage({
       </div>
 
       <ReadingPanel book={toApiBook(book)} />
+
+      {isIncomplete(book) ? <RefreshMetadata bookId={book.id} /> : null}
 
       <dl className="mt-8 grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-sm">
         {facts

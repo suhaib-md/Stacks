@@ -37,6 +37,7 @@ export async function PATCH(req: Request) {
     }
 
     if (patch.genre !== undefined) changes.genre = patch.genre || null;
+    if (patch.rating !== undefined) changes.rating = patch.rating ?? null;
 
     if (patch.addTags?.length) {
       // Union, not replace — bulk tagging should never drop existing tags.

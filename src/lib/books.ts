@@ -113,6 +113,9 @@ export const bulkPatchSchema = z.object({
     readStatus: z.enum(READ_STATUSES).optional(),
     addTags: z.array(z.string().trim().min(1).max(60)).max(10).optional(),
     genre: z.string().trim().max(100).nullish(),
+    // Null clears. Rating one book at a time meant 61 finished books stayed
+    // unrated; this is the only way it realistically happens.
+    rating: z.number().int().min(1).max(5).nullish(),
   }),
 });
 

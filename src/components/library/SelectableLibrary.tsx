@@ -107,6 +107,7 @@ export function SelectableLibrary({ books, view }: { books: Book[]; view: "grid"
           <span className="text-sm font-medium tabular">{selectedIds.length} selected</span>
           <div className="ml-auto flex gap-1">
             <BarButton onClick={() => setSheet("status")}>Status</BarButton>
+            <BarButton onClick={() => setSheet("rating")}>Rate</BarButton>
             <BarButton onClick={() => setSheet("tag")}>Tag</BarButton>
             <BarButton onClick={() => setSheet("delete")} danger>
               Delete
@@ -146,6 +147,11 @@ export function SelectableLibrary({ books, view }: { books: Book[]; view: "grid"
             void apply({ readStatus: status }, (n) => `Set ${n} to ${label}`)
           }
           onAddTag={(tag: string) => void apply({ addTags: [tag] }, (n) => `Tagged ${n} with "${tag}"`)}
+          onSetRating={(rating: number | null) =>
+            void apply({ rating }, (n) =>
+              rating === null ? `Cleared the rating on ${n}` : `Rated ${n} ${"★".repeat(rating)}`,
+            )
+          }
           onDelete={() => void removeSelected()}
         />
       ) : null}

@@ -18,7 +18,7 @@ const STATUS_LABEL: Record<ReadStatus, string> = {
   dnf: "Did not finish",
 };
 
-export type BulkSheet = "status" | "tag" | "delete";
+export type BulkSheet = "status" | "tag" | "rating" | "delete";
 
 export function BulkSheets({
   sheet,
@@ -27,6 +27,7 @@ export function BulkSheets({
   onClose,
   onSetStatus,
   onAddTag,
+  onSetRating,
   onDelete,
 }: {
   sheet: BulkSheet | null;
@@ -35,6 +36,7 @@ export function BulkSheets({
   onClose: () => void;
   onSetStatus: (status: ReadStatus, label: string) => void;
   onAddTag: (tag: string) => void;
+  onSetRating: (rating: number | null) => void;
   onDelete: () => void;
 }) {
   const [tagValue, setTagValue] = useState("");
@@ -42,6 +44,37 @@ export function BulkSheets({
 
   return (
     <>
+      <Sheet open={sheet === "rating"} onClose={onClose} labelledBy="bulk-rating">
+        <h2 id="bulk-rating" className="font-display text-lg">
+          Rate {count} {noun}
+        </h2>
+        <p className="mt-1 text-xs text-ink-muted">
+          Applies the same rating to everything selected.
+        </p>
+        <div className="mt-4 space-y-2">
+          {[5, 4, 3, 2, 1].map((stars) => (
+            <button
+              key={stars}
+              type="button"
+              disabled={pending}
+              onClick={() => onSetRating(stars)}
+              className="flex min-h-11 w-full items-center gap-3 rounded-card bg-surface-sunk px-4 text-left text-sm font-medium disabled:opacity-50"
+            >
+              <span className="text-accent">{"★".repeat(stars)}</span>
+              <span className="text-ink-faint">{"★".repeat(5 - stars)}</span>
+            </button>
+          ))}
+          <button
+            type="button"
+            disabled={pending}
+            onClick={() => onSetRating(null)}
+            className="min-h-11 w-full rounded-card px-4 text-left text-sm font-medium text-ink-muted disabled:opacity-50"
+          >
+            Clear rating
+          </button>
+        </div>
+      </Sheet>
+
       <Sheet open={sheet === "status"} onClose={onClose} labelledBy="bulk-status">
         <h2 id="bulk-status" className="font-display text-lg">
           Set status

@@ -7,6 +7,7 @@ import {
   verifyPassphrase,
 } from "@/lib/auth";
 import { apiError, apiOk, clientIp } from "@/lib/http";
+import { currentPassphraseHash } from "@/lib/passphrase";
 import { clearLoginAttempts, recordLoginAttempt } from "@/lib/rate-limit";
 
 const bodySchema = z.object({
@@ -21,7 +22,7 @@ export async function POST(req: Request) {
   }
 
   const env = await getEnv();
-  if (!env.SESSION_SECRET || !env.APP_PASSPHRASE_HASH) {
+  if (!env.SESSION_SECRET) {
     // Never fall back to "allow" — an unconfigured deployment is a locked one.
     return apiError(
       "SERVER_MISCONFIGURED",
@@ -39,11 +40,17 @@ export async function POST(req: Request) {
     });
   }
 
-  const ok = await verifyPassphrase(
-    parsed.data.passphrase,
-    env.APP_PASSPHRASE_HASH,
-    env.SESSION_SECRET,
-  );
+  // Prefers a passphrase you set from Settings, falling back to the deployment
+  // secret. A deployment with neither is locked, not open.
+  const stored = await currentPassphraseHash(db, env.APP_PASSPHRASE_HASH);
+  if (!stored) {
+    return apiError(
+      "SERVER_MISCONFIGURED",
+      "Auth secrets are not configured. Run scripts/gen-secrets.mjs and set them.",
+    );
+  }
+
+  const ok = await verifyPassphrase(parsed.data.passphrase, stored, env.SESSION_SECRET);
   if (!ok) {
     return apiError("UNAUTHORIZED", "That passphrase is not correct.");
   }
