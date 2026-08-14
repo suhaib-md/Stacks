@@ -124,9 +124,30 @@ function drawMark(px, size, scale = 1) {
   bar(0.16, 0.74, 0.84, 0.80, INK); // shelf
 }
 
-function icon(size, { maskable = false } = {}) {
+/**
+ * A heavier cut of the same mark, for the browser tab.
+ *
+ * The app-icon proportions turn to mush at 16px: the spines are thin, the gaps
+ * between them vanish, and the shelf rule disappears entirely. This version
+ * fills the tile, widens each spine and thickens the shelf so the silhouette
+ * still reads as books at favicon size.
+ */
+function drawBoldMark(px, size) {
+  const bar = (x0, y0, x1, y1, colour) => rect(px, size, x0, y0, x1, y1, colour);
+
+  bar(0.14, 0.26, 0.34, 0.76, PAPER);
+  bar(0.14, 0.26, 0.34, 0.36, INK);
+  bar(0.38, 0.17, 0.60, 0.76, AMBER);
+  bar(0.38, 0.17, 0.60, 0.29, INK);
+  bar(0.64, 0.32, 0.86, 0.76, PAPER);
+  bar(0.64, 0.32, 0.86, 0.42, INK);
+  bar(0.07, 0.76, 0.93, 0.87, INK);
+}
+
+function icon(size, { maskable = false, bold = false } = {}) {
   const px = canvas(size, LEATHER);
-  drawMark(px, size, maskable ? 0.8 : 1);
+  if (bold) drawBoldMark(px, size);
+  else drawMark(px, size, maskable ? 0.8 : 1);
   return encodePng(size, px);
 }
 
@@ -135,15 +156,32 @@ function icon(size, { maskable = false } = {}) {
 const outDir = resolve(process.cwd(), "public", "icons");
 mkdirSync(outDir, { recursive: true });
 
-const files = [
+const manifestIcons = [
   ["icon-192.png", icon(192)],
   ["icon-512.png", icon(512)],
   ["icon-512-maskable.png", icon(512, { maskable: true })],
   ["apple-touch-icon.png", icon(180)],
 ];
 
-for (const [name, buffer] of files) {
+for (const [name, buffer] of manifestIcons) {
   writeFileSync(resolve(outDir, name), buffer);
-  console.log(`  ${name.padEnd(24)} ${(buffer.length / 1024).toFixed(1)} KB`);
+  console.log(`  public/icons/${name.padEnd(24)} ${(buffer.length / 1024).toFixed(1)} KB`);
 }
-console.log(`\nWrote ${files.length} icons to public/icons/`);
+
+/**
+ * Next's file conventions: src/app/icon.png becomes the favicon and
+ * apple-icon.png the touch icon, both with the right <link> tags generated.
+ * A favicon.ico sitting beside them would win, so it must not exist.
+ */
+const appDir = resolve(process.cwd(), "src", "app");
+const appIcons = [
+  ["icon.png", icon(256, { bold: true })],
+  ["apple-icon.png", icon(180)],
+];
+
+for (const [name, buffer] of appIcons) {
+  writeFileSync(resolve(appDir, name), buffer);
+  console.log(`  src/app/${name.padEnd(29)} ${(buffer.length / 1024).toFixed(1)} KB`);
+}
+
+console.log(`\nWrote ${manifestIcons.length + appIcons.length} icons.`);

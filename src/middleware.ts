@@ -49,6 +49,11 @@ export async function middleware(req: NextRequest) {
 export const config = {
   matcher: [
     // Everything except Next internals and static assets.
-    "/((?!_next/static|_next/image|favicon.ico|icons/|fonts/|manifest.webmanifest|sw.js).*)",
+    //
+    // `icon.png` and `apple-icon.png` are generated routes from Next's file
+    // conventions, not files under /icons — leave them out and the gate
+    // redirects them to /login, so the tab icon is missing on the one page a
+    // signed-out visitor ever sees.
+    "/((?!_next/static|_next/image|favicon.ico|icon.png|apple-icon.png|icons/|fonts/|manifest.webmanifest|sw.js).*)",
   ],
 };
