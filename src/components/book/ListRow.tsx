@@ -48,7 +48,7 @@ export function ListRow({
         </span>
       ) : null}
         <div
-          className={`h-[54px] w-9 shrink-0 overflow-hidden border-2 border-rule ${
+          className={`h-[54px] w-9 shrink-0 overflow-hidden ${
             book.readStatus === "dnf" ? "opacity-55 saturate-50" : ""
           }`}
         >

@@ -29,13 +29,13 @@ export function AppShell({
         <div className="sticky top-0 flex h-dvh flex-col">
           <Link
             href="/"
-            className="flex items-center gap-3 border-b-2 border-rule px-4 py-4"
+            className="flex items-center gap-3 border-b border-rule-control px-4 py-4"
           >
             <span aria-hidden="true" className="size-4 shrink-0 bg-accent" />
             <span className="disp text-base">Stacks</span>
           </Link>
 
-          <div className="border-b-2 border-rule py-2">
+          <div className="border-b border-rule-control py-2">
             <RailNav />
           </div>
 
@@ -43,7 +43,7 @@ export function AppShell({
               the standing actions off the bottom. */}
           <div className="min-h-0 flex-1 overflow-y-auto">{rail}</div>
 
-          <div className="mt-auto border-t-2 border-rule">
+          <div className="mt-auto border-t border-rule-control">
             <a
               href="/api/export/csv"
               download

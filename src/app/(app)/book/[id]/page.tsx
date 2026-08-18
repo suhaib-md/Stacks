@@ -48,10 +48,10 @@ export default async function BookDetailPage({
 
       {/* The book as a record sheet: cover on the left, the entry beside it.
           No gradient header and no elevation — regions are divided by rules. */}
-      <div className="mt-4 flex flex-col gap-6 border-t-2 border-rule pt-6 md:flex-row md:gap-10">
+      <div className="mt-4 flex flex-col gap-6 border-t border-rule-control pt-6 md:flex-row md:gap-10">
         <div className="w-40 shrink-0 md:w-48">
           <div
-            className={`aspect-[2/3] w-full overflow-hidden border-2 border-rule ${
+            className={`aspect-[2/3] w-full overflow-hidden ${
               book.readStatus === "dnf" ? "opacity-50" : ""
             }`}
           >
@@ -85,7 +85,7 @@ export default async function BookDetailPage({
           {isIncomplete(book) ? <RefreshMetadata bookId={book.id} /> : null}
 
           {/* The entry — every catalogued field, one ruled row each. */}
-          <section className="mt-8 border-t-2 border-rule pt-4">
+          <section className="mt-8 border-t border-rule-control pt-4">
             <h2 className="lbl text-accent">The entry</h2>
             <dl className="mt-3">
               {facts
@@ -105,7 +105,7 @@ export default async function BookDetailPage({
           {tags.length > 0 ? (
             <ul className="mt-4 flex flex-wrap gap-2">
               {tags.map((tag) => (
-                <li key={tag} className="border-2 border-rule px-2 py-1 text-[11px] text-ink-muted">
+                <li key={tag} className="border border-rule-control px-2 py-1 text-[11px] text-ink-muted">
                   {tag}
                 </li>
               ))}
@@ -113,7 +113,7 @@ export default async function BookDetailPage({
           ) : null}
 
           {book.description ? (
-            <section className="mt-8 max-w-prose border-t-2 border-rule pt-4">
+            <section className="mt-8 max-w-prose border-t border-rule-control pt-4">
               <h2 className="lbl text-accent">Description</h2>
               {/* Provider text, rendered as text — never as HTML. */}
               <p className="mt-2 whitespace-pre-line text-[13px] leading-relaxed">

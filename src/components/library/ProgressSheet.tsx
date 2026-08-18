@@ -45,7 +45,7 @@ export function ProgressSheet({ book, onClose }: { book: Book; onClose: () => vo
         <button
           type="button"
           onClick={onClose}
-          className="min-h-11 flex-1 border-2 border-rule px-4 text-sm font-medium"
+          className="min-h-11 flex-1 border border-rule-control px-4 text-sm font-medium"
         >
           Done
         </button>

@@ -331,7 +331,7 @@ export function Scanner({
       {focusRing ? (
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute size-16 -translate-x-1/2 -translate-y-1/2 border-2 border-accent motion-safe:animate-[focusPulse_900ms_ease-out]"
+          className="pointer-events-none absolute size-16 -translate-x-1/2 -translate-y-1/2 border border-accent motion-safe:animate-[focusPulse_900ms_ease-out]"
           style={{ left: `${focusRing.x}%`, top: `${focusRing.y}%` }}
         >
           <style>{`

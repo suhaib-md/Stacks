@@ -53,7 +53,7 @@ export function NotesEditor({
       rows={5}
       placeholder="What you thought, where you found it, who lent it to you…"
       aria-label="Notes"
-      className="mt-2 w-full border-2 border-rule bg-surface-sunk px-3 py-2 text-sm leading-relaxed outline-none"
+      className="mt-2 w-full border border-rule-control bg-surface-sunk px-3 py-2 text-sm leading-relaxed outline-none"
     />
   );
 }

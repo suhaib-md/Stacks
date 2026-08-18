@@ -27,8 +27,8 @@ export function AddNav() {
             aria-current={active ? "page" : undefined}
             className={`min-h-11 flex-1 px-4 text-center text-sm font-medium leading-[2.75rem] transition-colors ${
               active
-                ? "border-2 border-accent bg-accent text-on-accent"
-                : "border-2 border-rule text-ink-muted"
+                ? "border border-accent bg-accent text-on-accent"
+                : "border border-rule-control text-ink-muted"
             }`}
           >
             {tab.label}

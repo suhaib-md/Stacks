@@ -50,7 +50,7 @@ export function RefreshMetadata({ bookId }: { bookId: string }) {
   }
 
   return (
-    <div className="mt-6 border-2 border-rule p-4">
+    <div className="mt-6 border border-rule-control p-4">
       <h2 className="lbl text-accent">Incomplete record</h2>
       <p className="mt-1 max-w-prose text-sm text-ink-muted">
         Some details are missing — often because a catalogue was unavailable when this

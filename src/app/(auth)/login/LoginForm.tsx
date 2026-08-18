@@ -53,7 +53,7 @@ export function LoginForm({ next }: { next: string }) {
         onChange={(e) => setPassphrase(e.target.value)}
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? "passphrase-error" : undefined}
-        className="mt-2 min-h-12 w-full border-2 border-rule bg-surface-sunk px-3 text-base tracking-[.2em] outline-none"
+        className="mt-2 min-h-12 w-full border border-rule-control bg-surface-sunk px-3 text-base tracking-[.2em] outline-none"
       />
 
       <button

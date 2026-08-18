@@ -49,8 +49,10 @@ export function CoverTile({ book, selection }: { book: Book; selection?: Selecti
   const art = (
     <>
       <div
-        className={`relative aspect-[2/3] w-full overflow-hidden border-2 bg-surface-sunk ${
-          selection?.selected ? "border-accent" : "border-rule"
+        // No border at rest: a shelf of bordered boxes reads as a grid, not as
+        // covers. Selection is the one thing that draws a frame.
+        className={`relative aspect-[2/3] w-full overflow-hidden bg-surface-sunk ${
+          selection?.selected ? "outline outline-2 -outline-offset-2 outline-accent" : ""
         } ${dnf ? "opacity-50" : ""}`}
       >
         <CoverImage
@@ -128,7 +130,7 @@ export function CoverTile({ book, selection }: { book: Book; selection?: Selecti
 export function CoverTileSkeleton() {
   return (
     <li aria-hidden="true">
-      <div className="aspect-[2/3] w-full animate-pulse border-2 border-rule bg-surface-sunk" />
+      <div className="aspect-[2/3] w-full animate-pulse bg-surface-sunk" />
       <div className="mt-2 h-3 w-4/5 animate-pulse bg-surface-sunk" />
       <div className="mt-1 h-2.5 w-3/5 animate-pulse bg-surface-sunk" />
     </li>

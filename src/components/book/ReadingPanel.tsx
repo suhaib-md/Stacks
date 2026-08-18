@@ -46,7 +46,7 @@ export function ReadingPanel({ book }: { book: ApiBook }) {
   }
 
   return (
-    <section className="mt-8 border-t-2 border-rule pt-4" aria-label="Reading">
+    <section className="mt-8 border-t border-rule-control pt-4" aria-label="Reading">
       <div className="flex items-center justify-between gap-3">
         <h2 className="lbl text-accent">Reading</h2>
         {indicator ? (
@@ -65,7 +65,7 @@ export function ReadingPanel({ book }: { book: ApiBook }) {
       <div
         role="radiogroup"
         aria-label="Read status"
-        className="mt-2 flex w-full border-2 border-rule"
+        className="mt-2 flex w-full border border-rule-control"
       >
         {READ_STATUSES.map((option, i) => (
           <button
@@ -75,7 +75,7 @@ export function ReadingPanel({ book }: { book: ApiBook }) {
             aria-checked={status === option}
             onClick={() => changeStatus(option)}
             className={`min-h-10 flex-1 px-2 text-[12px] font-medium transition-colors ${
-              i > 0 ? "border-l-2 border-rule" : ""
+              i > 0 ? "border-l border-rule-control" : ""
             } ${
               status === option
                 ? "bg-accent text-on-accent"

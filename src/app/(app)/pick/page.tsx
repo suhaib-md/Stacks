@@ -60,8 +60,8 @@ export default async function PickPage({
             aria-current={genre === null ? "page" : undefined}
             className={`min-h-9 px-3 text-xs font-medium leading-9 ${
               genre === null
-                ? "border-2 border-accent bg-accent text-on-accent"
-                : "border-2 border-rule text-ink-muted"
+                ? "border border-accent bg-accent text-on-accent"
+                : "border border-rule-control text-ink-muted"
             }`}
           >
             Any genre
@@ -73,8 +73,8 @@ export default async function PickPage({
               aria-current={genre === g ? "page" : undefined}
               className={`min-h-9 px-3 text-xs font-medium leading-9 ${
                 genre === g
-                  ? "border-2 border-accent bg-accent text-on-accent"
-                  : "border-2 border-rule text-ink-muted"
+                  ? "border border-accent bg-accent text-on-accent"
+                  : "border border-rule-control text-ink-muted"
               }`}
             >
               {g}

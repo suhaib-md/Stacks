@@ -56,7 +56,7 @@ export function PickShuffle({ books }: { books: Book[] }) {
       {picked ? (
         <>
           <Link href={`/book/${picked.id}`} className="block w-44">
-            <div className="aspect-[2/3] w-full overflow-hidden border-2 border-rule">
+            <div className="aspect-[2/3] w-full overflow-hidden">
               <CoverImage
                 src={picked.coverUrl}
                 title={picked.title}
@@ -79,7 +79,7 @@ export function PickShuffle({ books }: { books: Book[] }) {
             <button
               type="button"
               onClick={roll}
-              className="min-h-11 border-2 border-rule px-5 text-sm font-medium"
+              className="min-h-11 border border-rule-control px-5 text-sm font-medium"
             >
               Something else
             </button>

@@ -61,7 +61,7 @@ export function SearchAdd() {
             onChange={(e) => setQuery(e.target.value)}
             autoComplete="off"
             placeholder="the dispossessed le guin"
-            className="min-h-11 flex-1 border-2 border-rule bg-surface-sunk px-4 text-base outline-none"
+            className="min-h-11 flex-1 border border-rule-control bg-surface-sunk px-4 text-base outline-none"
           />
           <button
             type="submit"
@@ -107,10 +107,10 @@ export function SearchAdd() {
                       alt=""
                       width={40}
                       height={60}
-                      className="h-[60px] w-10 shrink-0 border-2 border-rule object-cover"
+                      className="h-[60px] w-10 shrink-0 border border-rule-control object-cover"
                     />
                   ) : (
-                    <div className="h-[60px] w-10 shrink-0 border-2 border-rule bg-surface-sunk" />
+                    <div className="h-[60px] w-10 shrink-0 bg-surface-sunk" />
                   )}
                   <span className="min-w-0 flex-1">
                     <span className="block truncate font-display text-base">{result.title}</span>

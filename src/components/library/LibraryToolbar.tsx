@@ -28,8 +28,7 @@ const STATUS_LABEL: Record<string, string> = {
 const GENRE_PREVIEW = 8;
 
 export function LibraryToolbar({ genres }: { genres: Facet[] }) {
-  const { params, query, setQuery, update, toggle, clearAll, hasActive, view, sort, order } =
-    useLibraryParams();
+  const { params, update, toggle, clearAll, hasActive, view, sort, order } = useLibraryParams();
   const [genresOpen, setGenresOpen] = useState(false);
   const [showAllGenres, setShowAllGenres] = useState(false);
 
@@ -37,21 +36,9 @@ export function LibraryToolbar({ genres }: { genres: Facet[] }) {
   const shownGenres = showAllGenres ? genres : genres.slice(0, GENRE_PREVIEW);
 
   return (
-    <div className="mt-4 border-y-2 border-rule">
-      {/* Search — mobile only; the rail carries it on desktop. */}
-      <div className="border-b-2 border-rule md:hidden">
-        <input
-          type="search"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Title, author, or notes"
-          aria-label="Search your library"
-          className="min-h-11 w-full border-2 border-rule bg-surface-sunk px-3 text-[13px] outline-none placeholder:text-ink-faint"
-        />
-      </div>
-
+    <div className="mt-4 border-y border-rule-control">
       {/* Status — mobile only. */}
-      <div className="flex gap-2 overflow-x-auto border-b-2 border-rule p-2 [scrollbar-width:none] md:hidden">
+      <div className="flex gap-2 overflow-x-auto border-b border-rule-control p-2 [scrollbar-width:none] md:hidden">
         {READ_STATUSES.map((s) => {
           const active = params.get("status") === s;
           return (
@@ -74,7 +61,7 @@ export function LibraryToolbar({ genres }: { genres: Facet[] }) {
 
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2 p-2">
         {/* View — a segmented control, not a menu. */}
-        <div role="group" aria-label="View" className="flex border-2 border-rule">
+        <div role="group" aria-label="View" className="flex border border-rule-control">
           {(["grid", "list"] as const).map((v) => (
             <button
               key={v}
@@ -98,7 +85,7 @@ export function LibraryToolbar({ genres }: { genres: Facet[] }) {
             id="sort"
             value={sort}
             onChange={(e) => update("sort", e.target.value)}
-            className="min-h-8 border-2 border-rule bg-paper px-2 text-[12px] outline-none"
+            className="min-h-8 border border-rule-control bg-paper px-2 text-[12px] outline-none"
           >
             {SORTS.map((s) => (
               <option key={s.value} value={s.value}>
@@ -112,7 +99,7 @@ export function LibraryToolbar({ genres }: { genres: Facet[] }) {
             aria-label={
               order === "asc" ? "Ascending, switch to descending" : "Descending, switch to ascending"
             }
-            className="min-h-8 border-2 border-rule px-2 text-[12px] hover:bg-ink/[.08]"
+            className="min-h-8 border border-rule-control px-2 text-[12px] hover:bg-ink/[.08]"
           >
             {order === "asc" ? "↑" : "↓"}
           </button>
@@ -146,7 +133,7 @@ export function LibraryToolbar({ genres }: { genres: Facet[] }) {
       </div>
 
       {genresOpen ? (
-        <div className="flex flex-wrap gap-2 border-t-2 border-rule p-2 md:hidden">
+        <div className="flex flex-wrap gap-2 border-t border-rule-control p-2 md:hidden">
           {shownGenres.map((g) => (
             <button
               key={g.value}

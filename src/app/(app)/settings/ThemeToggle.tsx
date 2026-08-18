@@ -62,8 +62,8 @@ export function ThemeToggle() {
           onClick={() => apply(option)}
           className={`min-h-11 px-4 text-sm font-medium capitalize transition-colors ${
             theme === option
-              ? "border-2 border-accent bg-accent text-on-accent"
-              : "border-2 border-rule text-ink-muted"
+              ? "border border-accent bg-accent text-on-accent"
+              : "border border-rule-control text-ink-muted"
           }`}
         >
           {option}

@@ -40,7 +40,7 @@ export function CoverPicker({
       </span>
 
       <div className="flex gap-4">
-        <div className="h-[132px] w-22 shrink-0 overflow-hidden border-2 border-rule">
+        <div className="h-[132px] w-22 shrink-0 overflow-hidden">
           {/* Always previews the generated design, even when artwork exists, so
               you can see what you're choosing. */}
           <GeneratedCover

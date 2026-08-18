@@ -51,7 +51,7 @@ export function PageProgress({
           }}
           inputMode="numeric"
           aria-label="Current page"
-          className="min-h-11 w-16 border-2 border-rule bg-surface-sunk text-center text-sm tabular outline-none"
+          className="min-h-11 w-16 border border-rule-control bg-surface-sunk text-center text-sm tabular outline-none"
         />
 
         <StepButton
@@ -113,7 +113,7 @@ function StepButton({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="min-h-11 border-2 border-rule bg-surface-sunk px-3 text-sm font-medium tabular disabled:opacity-40"
+      className="min-h-11 border border-rule-control bg-surface-sunk px-3 text-sm font-medium tabular disabled:opacity-40"
     >
       {children}
     </button>

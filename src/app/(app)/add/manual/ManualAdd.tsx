@@ -26,7 +26,7 @@ function Field({ label, hint, children, htmlFor }: FieldProps) {
 }
 
 const inputClass =
-"w-full border-2 border-rule bg-surface-sunk px-3 py-2 text-sm outline-none";
+"w-full border border-rule-control bg-surface-sunk px-3 py-2 text-sm outline-none";
 
 export function ManualAdd({
   initialIsbn,

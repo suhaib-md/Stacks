@@ -103,7 +103,7 @@ export function SelectableLibrary({ books, view }: { books: Book[]; view: "grid"
   return (
     <>
       {mode.active ? (
-        <div className="sticky top-14 z-20 -mx-4 mb-2 flex items-center gap-2 border-b-2 border-rule bg-paper/95 px-4 py-2 backdrop-blur">
+        <div className="sticky top-14 z-20 -mx-4 mb-2 flex items-center gap-2 border-b border-rule-control bg-paper/95 px-4 py-2 backdrop-blur">
           <span className="text-sm font-medium tabular">{selectedIds.length} selected</span>
           <div className="ml-auto flex gap-1">
             <BarButton onClick={() => setSheet("status")}>Status</BarButton>

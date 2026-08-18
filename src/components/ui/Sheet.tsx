@@ -83,7 +83,7 @@ export function Sheet({
         role="dialog"
         aria-modal="true"
         aria-labelledby={labelledBy}
-        className="relative max-h-[90dvh] w-full overflow-y-auto border-t-2 border-rule bg-surface p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] motion-safe:animate-[sheetIn_220ms_cubic-bezier(0.32,0.72,0,1)] sm:max-w-[420px] sm:border-2 sm:pb-4"
+        className="relative max-h-[90dvh] w-full overflow-y-auto border-t border-rule-control bg-surface p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] motion-safe:animate-[sheetIn_220ms_cubic-bezier(0.32,0.72,0,1)] sm:max-w-[420px] sm:border-2 sm:pb-4"
       >
         {/* Grab handle — affordance on phones, meaningless on desktop. */}
         <div

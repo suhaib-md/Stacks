@@ -64,12 +64,12 @@ export default async function SettingsPage() {
         </p>
       </section>
 
-      <section className="mt-8 border-t-2 border-rule pt-6">
+      <section className="mt-8 border-t border-rule-control pt-6">
         <h2 className="lbl text-accent">Fill in missing details</h2>
         <RefreshSweep candidates={incomplete} />
       </section>
 
-      <section className="mt-8 border-t-2 border-rule pt-6">
+      <section className="mt-8 border-t border-rule-control pt-6">
         <h2 className="lbl text-accent">Backup</h2>
         <p className="mt-1 max-w-prose text-sm text-ink-muted">
           Everything you own, as a spreadsheet. Descriptions are left out — they come
@@ -86,7 +86,7 @@ export default async function SettingsPage() {
         </a>
       </section>
 
-      <section className="mt-8 border-t-2 border-rule pt-6">
+      <section className="mt-8 border-t border-rule-control pt-6">
         <h2 className="lbl text-accent">Install</h2>
         <p className="mt-1 max-w-prose text-sm text-ink-muted">
           Adds Stacks to your home screen and keeps your library readable without a
@@ -95,17 +95,17 @@ export default async function SettingsPage() {
         <InstallPrompt />
       </section>
 
-      <section className="mt-8 border-t-2 border-rule pt-6">
+      <section className="mt-8 border-t border-rule-control pt-6">
         <h2 className="lbl text-accent">Theme</h2>
         <ThemeToggle />
       </section>
 
-      <section className="mt-8 border-t-2 border-rule pt-6">
+      <section className="mt-8 border-t border-rule-control pt-6">
         <h2 className="lbl text-accent">Passphrase</h2>
         <ChangePassphrase />
       </section>
 
-      <section className="mt-8 border-t-2 border-rule pt-6">
+      <section className="mt-8 border-t border-rule-control pt-6">
         <SignOutButton />
       </section>
     </>

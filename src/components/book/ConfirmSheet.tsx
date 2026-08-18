@@ -134,7 +134,7 @@ function ConfirmSheetForm({
           <button
             type="button"
             onClick={onClose}
-            className="min-h-11 flex-1 border-2 border-rule px-4 text-sm font-medium"
+            className="min-h-11 flex-1 border border-rule-control px-4 text-sm font-medium"
           >
             Keep going
           </button>
@@ -163,10 +163,10 @@ function ConfirmSheetForm({
             alt=""
             width={72}
             height={108}
-            className="h-[108px] w-[72px] shrink-0 border-2 border-rule object-cover"
+            className="h-[108px] w-[72px] shrink-0 object-cover"
           />
         ) : (
-          <div className="flex h-[108px] w-[72px] shrink-0 items-center justify-center border-2 border-rule bg-surface-sunk text-[10px] text-ink-faint">
+          <div className="flex h-[108px] w-[72px] shrink-0 items-center justify-center bg-surface-sunk text-[10px] text-ink-faint">
             No cover
           </div>
         )}
@@ -188,7 +188,7 @@ function ConfirmSheetForm({
       </div>
 
       {!metadata ? (
-        <div className="mt-4 border-2 border-rule bg-surface-sunk p-3 text-xs text-ink-muted">
+        <div className="mt-4 border border-rule-control bg-surface-sunk p-3 text-xs text-ink-muted">
           <p>
             No metadata found{isbn ? " for that ISBN" : ""}. Fill in what you know —
             the book still gets catalogued.
@@ -211,7 +211,7 @@ function ConfirmSheetForm({
           <input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="w-full border-2 border-rule bg-surface-sunk px-3 py-2 text-sm outline-none"
+            className="w-full border border-rule-control bg-surface-sunk px-3 py-2 text-sm outline-none"
           />
         </label>
 
@@ -222,7 +222,7 @@ function ConfirmSheetForm({
           <input
             value={authors}
             onChange={(e) => setAuthors(e.target.value)}
-            className="w-full border-2 border-rule bg-surface-sunk px-3 py-2 text-sm outline-none"
+            className="w-full border border-rule-control bg-surface-sunk px-3 py-2 text-sm outline-none"
           />
         </label>
 
@@ -232,7 +232,7 @@ function ConfirmSheetForm({
             <select
               value={format}
               onChange={(e) => setFormat(e.target.value as BookFormat)}
-              className="w-full border-2 border-rule bg-surface-sunk px-3 py-2 text-sm capitalize outline-none"
+              className="w-full border border-rule-control bg-surface-sunk px-3 py-2 text-sm capitalize outline-none"
             >
               {BOOK_FORMATS.map((f) => (
                 <option key={f} value={f}>
@@ -247,7 +247,7 @@ function ConfirmSheetForm({
             <select
               value={status}
               onChange={(e) => setStatus(e.target.value as ReadStatus)}
-              className="w-full border-2 border-rule bg-surface-sunk px-3 py-2 text-sm capitalize outline-none"
+              className="w-full border border-rule-control bg-surface-sunk px-3 py-2 text-sm capitalize outline-none"
             >
               {READ_STATUSES.map((s) => (
                 <option key={s} value={s}>
@@ -269,7 +269,7 @@ function ConfirmSheetForm({
         <button
           type="button"
           onClick={onClose}
-          className="min-h-11 border-2 border-rule px-4 text-sm font-medium"
+          className="min-h-11 border border-rule-control px-4 text-sm font-medium"
         >
           Skip
         </button>

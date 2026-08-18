@@ -220,7 +220,7 @@ function IsbnEntrySheet({
           placeholder="978…"
           aria-label="ISBN"
           aria-invalid={error ? true : undefined}
-          className="w-full border-2 border-rule bg-surface-sunk px-4 py-3 text-base tabular outline-none"
+          className="w-full border border-rule-control bg-surface-sunk px-4 py-3 text-base tabular outline-none"
         />
         {error ? (
           <p role="alert" className="mt-2 text-sm text-danger">
@@ -231,7 +231,7 @@ function IsbnEntrySheet({
           <button
             type="button"
             onClick={onClose}
-            className="min-h-11 border-2 border-rule px-4 text-sm font-medium"
+            className="min-h-11 border border-rule-control px-4 text-sm font-medium"
           >
             Cancel
           </button>

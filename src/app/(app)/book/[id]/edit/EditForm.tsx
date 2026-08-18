@@ -9,7 +9,7 @@ import type { ApiBook } from "@/lib/books";
 import { isValidIsbn } from "@/lib/isbn";
 
 const inputClass =
-"w-full border-2 border-rule bg-surface-sunk px-3 py-2 text-sm outline-none";
+"w-full border border-rule-control bg-surface-sunk px-3 py-2 text-sm outline-none";
 
 function Field({
   label,

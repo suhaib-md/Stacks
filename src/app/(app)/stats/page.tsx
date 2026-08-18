@@ -56,7 +56,7 @@ function Bar({ label, count, total, href }: { label: string; count: number; tota
 
 function Section({ title, note, children }: { title: string; note?: string; children: React.ReactNode }) {
   return (
-    <section className="mt-8 border-t-2 border-rule pt-6">
+    <section className="mt-8 border-t border-rule-control pt-6">
       <h2 className="lbl text-accent">{title}</h2>
       {note ? <p className="mt-1 text-xs text-ink-faint">{note}</p> : null}
       <ul className="mt-3 space-y-2">{children}</ul>

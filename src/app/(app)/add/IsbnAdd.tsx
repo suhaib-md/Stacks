@@ -78,7 +78,7 @@ export function IsbnAdd() {
             placeholder="978…"
             aria-invalid={error ? true : undefined}
             aria-describedby={error ? "isbn-error" : undefined}
-            className="min-h-11 flex-1 border-2 border-rule bg-surface-sunk px-4 text-base tabular outline-none"
+            className="min-h-11 flex-1 border border-rule-control bg-surface-sunk px-4 text-base tabular outline-none"
           />
           <button
             type="submit"

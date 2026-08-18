@@ -58,7 +58,7 @@ export function BulkSheets({
               type="button"
               disabled={pending}
               onClick={() => onSetRating(stars)}
-              className="flex min-h-11 w-full items-center gap-3 border-2 border-rule bg-surface-sunk px-4 text-left text-sm font-medium disabled:opacity-50"
+              className="flex min-h-11 w-full items-center gap-3 border border-rule-control bg-surface-sunk px-4 text-left text-sm font-medium disabled:opacity-50"
             >
               <span className="text-accent">{"★".repeat(stars)}</span>
               <span className="text-ink-faint">{"★".repeat(5 - stars)}</span>
@@ -89,7 +89,7 @@ export function BulkSheets({
               type="button"
               disabled={pending}
               onClick={() => onSetStatus(status, STATUS_LABEL[status])}
-              className="min-h-11 w-full border-2 border-rule bg-surface-sunk px-4 text-left text-sm font-medium disabled:opacity-50"
+              className="min-h-11 w-full border border-rule-control bg-surface-sunk px-4 text-left text-sm font-medium disabled:opacity-50"
             >
               {STATUS_LABEL[status]}
             </button>
@@ -119,7 +119,7 @@ export function BulkSheets({
             onChange={(e) => setTagValue(e.target.value)}
             placeholder="e.g. cabinet-one"
             aria-label="Tag"
-            className="w-full border-2 border-rule bg-surface-sunk px-4 py-3 text-sm outline-none"
+            className="w-full border border-rule-control bg-surface-sunk px-4 py-3 text-sm outline-none"
           />
           <button
             type="submit"
@@ -140,7 +140,7 @@ export function BulkSheets({
           <button
             type="button"
             onClick={onClose}
-            className="min-h-11 flex-1 border-2 border-rule px-4 text-sm font-medium"
+            className="min-h-11 flex-1 border border-rule-control px-4 text-sm font-medium"
           >
             Keep them
           </button>

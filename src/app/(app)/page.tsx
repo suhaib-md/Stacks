@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { Suspense } from "react";
 import { CoverTileSkeleton } from "@/components/book/CoverTile";
 import { CurrentlyReading } from "@/components/library/CurrentlyReading";
+import { LibrarySearch } from "@/components/library/LibrarySearch";
 import { LibraryToolbar } from "@/components/library/LibraryToolbar";
 import { SelectableLibrary } from "@/components/library/SelectableLibrary";
 import { getDb } from "@/db";
@@ -94,13 +95,18 @@ export default async function LibraryPage({
           </p>
         </div>
 
-        {/* The only red on the screen: the action that adds something. */}
-        <Link
-          href="/add"
-          className="min-h-10 bg-accent px-5 text-[13px] font-medium leading-10 text-on-accent"
-        >
-          Scan a book
-        </Link>
+        <div className="flex w-full flex-wrap items-center gap-3 sm:w-auto">
+          <Suspense fallback={<div className="h-10 w-full sm:w-72" />}>
+            <LibrarySearch />
+          </Suspense>
+          {/* The only red on the screen: the action that adds something. */}
+          <Link
+            href="/add"
+            className="min-h-10 shrink-0 bg-accent px-5 text-[13px] font-medium leading-10 text-on-accent"
+          >
+            Scan a book
+          </Link>
+        </div>
       </div>
 
       {/* Hidden entirely rather than shown empty when nothing is being read. */}
@@ -131,14 +137,14 @@ function EmptyState({ filtered }: { filtered: boolean }) {
   if (filtered) {
     return (
       // Quiet, and it stays put: the library is right there behind it.
-      <div className="border-b-2 border-rule py-6">
+      <div className="border-b border-rule-control py-6">
         <p className="disp text-lg">No books match these filters</p>
         <p className="mt-1.5 max-w-md text-[13px] text-ink-muted">
           Your library isn&apos;t empty — this search just came up short.
         </p>
         <Link
           href="/"
-          className="mt-4 inline-flex min-h-9 items-center border-2 border-rule px-4 text-[12px] font-medium hover:bg-ink/[.08]"
+          className="mt-4 inline-flex min-h-9 items-center border border-rule-control px-4 text-[12px] font-medium hover:bg-ink/[.08]"
         >
           Clear filters
         </Link>
@@ -148,7 +154,7 @@ function EmptyState({ filtered }: { filtered: boolean }) {
 
   return (
     // A poster with one instruction.
-    <div className="mt-10 max-w-2xl border-t-2 border-rule pt-10">
+    <div className="mt-10 max-w-2xl border-t border-rule-control pt-10">
       <span className="lbl text-accent">Nothing catalogued yet</span>
       <p className="disp mt-4 text-[38px] leading-none md:text-[54px]">
         Your shelves are empty.
@@ -166,7 +172,7 @@ function EmptyState({ filtered }: { filtered: boolean }) {
         </Link>
         <Link
           href="/add/search"
-          className="min-h-11 border-2 border-rule px-4 text-[13px] font-medium leading-[2.6rem] hover:bg-ink/[.08]"
+          className="min-h-11 border border-rule-control px-4 text-[13px] font-medium leading-[2.6rem] hover:bg-ink/[.08]"
         >
           Search by title
         </Link>
@@ -199,11 +205,11 @@ function Pagination({
   };
 
   return (
-    <nav className="mt-8 flex items-center justify-between border-t-2 border-rule pt-4" aria-label="Pagination">
+    <nav className="mt-8 flex items-center justify-between border-t border-rule-control pt-4" aria-label="Pagination">
       {page > 1 ? (
         <Link
           href={href(page - 1)}
-          className="min-h-9 border-2 border-rule px-4 text-[12px] font-medium leading-[2.1rem] hover:bg-ink/[.08]"
+          className="min-h-9 border border-rule-control px-4 text-[12px] font-medium leading-[2.1rem] hover:bg-ink/[.08]"
         >
           Previous
         </Link>
@@ -216,7 +222,7 @@ function Pagination({
       {page < totalPages ? (
         <Link
           href={href(page + 1)}
-          className="min-h-9 border-2 border-rule px-4 text-[12px] font-medium leading-[2.1rem] hover:bg-ink/[.08]"
+          className="min-h-9 border border-rule-control px-4 text-[12px] font-medium leading-[2.1rem] hover:bg-ink/[.08]"
         >
           Next
         </Link>

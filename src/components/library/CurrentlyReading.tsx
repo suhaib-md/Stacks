@@ -43,7 +43,7 @@ export function CurrentlyReading({ books }: { books: Book[] }) {
           return (
             <li key={book.id} className="w-[136px] shrink-0 snap-start">
               <Link href={`/book/${book.id}`} className="group block">
-                <div className="aspect-[2/3] w-full overflow-hidden border-2 border-rule bg-surface-sunk transition-transform duration-100 group-active:scale-[0.97]">
+                <div className="aspect-[2/3] w-full overflow-hidden bg-surface-sunk transition-transform duration-100 group-active:scale-[0.97]">
                   <CoverImage
                     src={book.coverUrl}
                     title={book.title}

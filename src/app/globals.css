@@ -18,9 +18,12 @@
   --ink-muted: rgba(32, 30, 29, 0.62);
   --ink-faint: rgba(32, 30, 29, 0.45);
 
-  /* Rules do the dividing that shadows and radius used to. */
-  --rule: #201e1d;                        /* major — 2px between regions */
-  --rule-minor: rgba(32, 30, 29, 0.22);   /* minor — 1px between rows */
+  /* Rules do the dividing that shadows and radius used to — but only between
+     REGIONS. A 2px rule on every cover and control turns a shelf into a grid of
+     boxes, so those get the softer control rule or none at all. */
+  --rule: #201e1d;                        /* major — 2px, app frame + sections */
+  --rule-control: rgba(32, 30, 29, 0.32); /* 1px around inputs and buttons */
+  --rule-minor: rgba(32, 30, 29, 0.16);   /* 1px between rows in one table */
 
   --accent: #ec3013;         /* the one action that commits */
   --accent-pressed: #c1270f;
@@ -52,7 +55,8 @@
     --ink-muted: rgba(243, 242, 242, 0.62);
     --ink-faint: rgba(243, 242, 242, 0.45);
     --rule: #f3f2f2;
-    --rule-minor: rgba(243, 242, 242, 0.16);
+    --rule-control: rgba(243, 242, 242, 0.34);
+    --rule-minor: rgba(243, 242, 242, 0.14);
     --accent-soft: rgba(236, 48, 19, 0.16);
     --progress-track: rgba(243, 242, 242, 0.18);
     --success: #f3f2f2;
@@ -67,7 +71,8 @@
   --ink-muted: rgba(243, 242, 242, 0.62);
   --ink-faint: rgba(243, 242, 242, 0.45);
   --rule: #f3f2f2;
-  --rule-minor: rgba(243, 242, 242, 0.16);
+  --rule-control: rgba(243, 242, 242, 0.34);
+  --rule-minor: rgba(243, 242, 242, 0.14);
   --accent-soft: rgba(236, 48, 19, 0.16);
   --progress-track: rgba(243, 242, 242, 0.18);
   --success: #f3f2f2;
@@ -83,6 +88,7 @@
   --color-ink-muted: var(--ink-muted);
   --color-ink-faint: var(--ink-faint);
   --color-rule: var(--rule);
+  --color-rule-control: var(--rule-control);
   --color-rule-minor: var(--rule-minor);
   --color-accent: var(--accent);
   --color-accent-pressed: var(--accent-pressed);
