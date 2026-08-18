@@ -1,14 +1,13 @@
 "use client";
 
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
-import { READ_STATUSES, BOOK_FORMATS } from "@/db/schema";
+import { useState } from "react";
+import { READ_STATUSES } from "@/db/schema";
+import { useLibraryParams } from "@/lib/useLibraryParams";
+import type { Facet } from "./RailFilters";
 
 /**
- * Filters, sort, and view all live in the URL — not in client state.
- *
- * That is what makes the back button, deep links, and "restore where I was"
- * work without any extra machinery, and it lets the server resolve the query.
+ * View and sort, always. Search and the status filters as well — but only on
+ * mobile, where there is no rail to hold them.
  */
 
 const SORTS = [
@@ -26,260 +25,154 @@ const STATUS_LABEL: Record<string, string> = {
   dnf: "DNF",
 };
 
-/**
- * Remembered for next visit. A cookie rather than localStorage so the server can
- * honour it on first paint instead of flashing the wrong layout then correcting.
- */
-function rememberView(view: string): void {
-  document.cookie = `stacks-view=${view}; path=/; max-age=31536000; samesite=lax`;
-}
+const GENRE_PREVIEW = 8;
 
-export type GenreFacet = { name: string; count: number };
-
-/** How many genres show before "Show all" — roughly two rows on a phone. */
-const GENRE_PREVIEW = 12;
-
-export function LibraryToolbar({ genres }: { genres: GenreFacet[] }) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const params = useSearchParams();
-
-  const currentQ = params.get("q") ?? "";
-  const [query, setQuery] = useState(currentQ);
+export function LibraryToolbar({ genres }: { genres: Facet[] }) {
+  const { params, query, setQuery, update, toggle, clearAll, hasActive, view, sort, order } =
+    useLibraryParams();
   const [genresOpen, setGenresOpen] = useState(false);
   const [showAllGenres, setShowAllGenres] = useState(false);
 
   const activeGenre = params.get("genre");
-
-  // Debounced search. Writes to the URL rather than to state, so the server
-  // re-resolves the list and the history entry is meaningful.
-  useEffect(() => {
-    if (query === currentQ) return;
-    const timer = setTimeout(() => {
-      const next = new URLSearchParams(params.toString());
-      if (query) next.set("q", query);
-      else next.delete("q");
-      next.delete("page");
-      router.replace(`${pathname}?${next.toString()}`, { scroll: false });
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [query, currentQ, params, pathname, router]);
-
-  function update(key: string, value: string | null) {
-    const next = new URLSearchParams(params.toString());
-    if (value === null) next.delete(key);
-    else next.set(key, value);
-    next.delete("page"); // Any filter change invalidates the current page.
-
-    if (key === "view" && value) rememberView(value);
-
-    router.replace(`${pathname}?${next.toString()}`, { scroll: false });
-  }
-
-  /** Clicking an active chip clears it — chips are toggles, not radio buttons. */
-  function toggle(key: string, value: string) {
-    update(key, params.get(key) === value ? null : value);
-  }
-
-  const view = params.get("view") ?? "grid";
-  const sort = params.get("sort") ?? "created";
-  const order = params.get("order") ?? "desc";
-  const activeFilters = ["status", "genre", "format"].filter((k) => params.get(k));
+  const shownGenres = showAllGenres ? genres : genres.slice(0, GENRE_PREVIEW);
 
   return (
-    <div className="mt-4 space-y-3">
-      <div className="flex gap-2">
-        <div className="relative flex-1">
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth={1.5}
-            aria-hidden="true"
-            className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-ink-faint"
-          >
-            <circle cx="11" cy="11" r="7" />
-            <path d="M20 20l-3.5-3.5" strokeLinecap="round" />
-          </svg>
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            type="search"
-            placeholder="Title, author, or notes"
-            aria-label="Search your library"
-            className="min-h-11 w-full rounded-card bg-surface-sunk pl-9 pr-3 text-sm outline-none ring-accent focus:ring-2"
-          />
-        </div>
+    <div className="mt-4 border-y-2 border-rule">
+      {/* Search — mobile only; the rail carries it on desktop. */}
+      <div className="border-b-2 border-rule md:hidden">
+        <input
+          type="search"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Title, author, or notes"
+          aria-label="Search your library"
+          className="min-h-11 w-full border-2 border-rule bg-surface-sunk px-3 text-[13px] outline-none placeholder:text-ink-faint"
+        />
+      </div>
 
-        <div
-          role="group"
-          aria-label="View"
-          className="flex shrink-0 overflow-hidden rounded-card bg-surface-sunk"
-        >
+      {/* Status — mobile only. */}
+      <div className="flex gap-2 overflow-x-auto border-b-2 border-rule p-2 [scrollbar-width:none] md:hidden">
+        {READ_STATUSES.map((s) => {
+          const active = params.get("status") === s;
+          return (
+            <button
+              key={s}
+              type="button"
+              onClick={() => toggle("status", s)}
+              aria-pressed={active}
+              className={`min-h-9 shrink-0 border-2 px-3 text-[12px] font-medium ${
+                active
+                  ? "border-accent bg-accent text-on-accent"
+                  : "border-rule text-ink"
+              }`}
+            >
+              {STATUS_LABEL[s]}
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 p-2">
+        {/* View — a segmented control, not a menu. */}
+        <div role="group" aria-label="View" className="flex border-2 border-rule">
           {(["grid", "list"] as const).map((v) => (
             <button
               key={v}
               type="button"
               onClick={() => update("view", v)}
               aria-pressed={view === v}
-              aria-label={`${v} view`}
-              className={`flex min-h-11 w-11 items-center justify-center transition-colors ${
-                view === v ? "bg-accent-soft text-accent" : "text-ink-muted"
+              className={`min-h-8 px-3 text-[12px] font-medium capitalize ${
+                view === v ? "bg-accent text-on-accent" : "hover:bg-ink/[.08]"
               }`}
             >
-              {v === "grid" ? (
-                <svg viewBox="0 0 24 24" fill="currentColor" className="size-4">
-                  <rect x="3" y="3" width="7" height="7" rx="1" />
-                  <rect x="14" y="3" width="7" height="7" rx="1" />
-                  <rect x="3" y="14" width="7" height="7" rx="1" />
-                  <rect x="14" y="14" width="7" height="7" rx="1" />
-                </svg>
-              ) : (
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="size-4">
-                  <path d="M4 6h16M4 12h16M4 18h16" strokeLinecap="round" />
-                </svg>
-              )}
+              {v}
             </button>
           ))}
         </div>
-      </div>
 
-      {/* Horizontally scrollable on phones; the row is longer than the screen. */}
-      <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] md:mx-0 md:flex-wrap md:px-0">
-        {READ_STATUSES.map((status) => (
-          <Chip
-            key={status}
-            active={params.get("status") === status}
-            onClick={() => toggle("status", status)}
+        <div className="flex items-center gap-2">
+          <label htmlFor="sort" className="lbl text-ink-muted">
+            Sort
+          </label>
+          <select
+            id="sort"
+            value={sort}
+            onChange={(e) => update("sort", e.target.value)}
+            className="min-h-8 border-2 border-rule bg-paper px-2 text-[12px] outline-none"
           >
-            {STATUS_LABEL[status]}
-          </Chip>
-        ))}
-
-        <span aria-hidden="true" className="w-px shrink-0 self-stretch bg-rule" />
-
-        {BOOK_FORMATS.map((format) => (
-          <Chip
-            key={format}
-            active={params.get("format") === format}
-            onClick={() => toggle("format", format)}
-          >
-            <span className="capitalize">{format}</span>
-          </Chip>
-        ))}
-
-        {genres.length > 0 ? (
-          <>
-            <span aria-hidden="true" className="w-px shrink-0 self-stretch bg-rule" />
-            {/* Genres live behind a disclosure. Providers hand back dozens of
-                catalogue headings per shelf, and rendering them all buried the
-                library under its own filters. */}
-            <Chip active={Boolean(activeGenre) || genresOpen} onClick={() => setGenresOpen((v) => !v)}>
-              {activeGenre ?? "Genre"}
-              <span aria-hidden="true" className="ml-1 opacity-60">
-                {genresOpen ? "▲" : "▼"}
-              </span>
-            </Chip>
-          </>
-        ) : null}
-      </div>
-
-      {genresOpen && genres.length > 0 ? (
-        <div className="rounded-card bg-surface-sunk p-3">
-          <div className="flex flex-wrap gap-2">
-            {(showAllGenres ? genres : genres.slice(0, GENRE_PREVIEW)).map((genre) => (
-              <Chip
-                key={genre.name}
-                active={activeGenre === genre.name}
-                onClick={() => {
-                  toggle("genre", genre.name);
-                  setGenresOpen(false);
-                }}
-              >
-                {genre.name}
-                <span className="ml-1.5 tabular opacity-50">{genre.count}</span>
-              </Chip>
+            {SORTS.map((s) => (
+              <option key={s.value} value={s.value}>
+                {s.label}
+              </option>
             ))}
-          </div>
-
-          {genres.length > GENRE_PREVIEW ? (
-            <button
-              type="button"
-              onClick={() => setShowAllGenres((v) => !v)}
-              className="mt-2 text-xs font-medium text-accent"
-            >
-              {showAllGenres
-                ? "Show fewer"
-                : `Show all ${genres.length} genres`}
-            </button>
-          ) : null}
-        </div>
-      ) : null}
-
-      <div className="flex items-center gap-2">
-        <label htmlFor="sort" className="text-xs text-ink-muted">
-          Sort
-        </label>
-        <select
-          id="sort"
-          value={sort}
-          onChange={(e) => update("sort", e.target.value)}
-          className="min-h-9 rounded-card bg-surface-sunk px-2 text-xs outline-none ring-accent focus:ring-2"
-        >
-          {SORTS.map((s) => (
-            <option key={s.value} value={s.value}>
-              {s.label}
-            </option>
-          ))}
-        </select>
-
-        <button
-          type="button"
-          onClick={() => update("order", order === "asc" ? "desc" : "asc")}
-          aria-label={order === "asc" ? "Ascending, switch to descending" : "Descending, switch to ascending"}
-          className="min-h-9 rounded-card bg-surface-sunk px-2 text-xs text-ink-muted"
-        >
-          {order === "asc" ? "↑" : "↓"}
-        </button>
-
-        {activeFilters.length > 0 || currentQ ? (
+          </select>
           <button
             type="button"
-            onClick={() => {
-              setQuery("");
-              router.replace(pathname, { scroll: false });
-            }}
-            className="ml-auto min-h-9 rounded-card px-2 text-xs font-medium text-accent"
+            onClick={() => update("order", order === "asc" ? "desc" : "asc")}
+            aria-label={
+              order === "asc" ? "Ascending, switch to descending" : "Descending, switch to ascending"
+            }
+            className="min-h-8 border-2 border-rule px-2 text-[12px] hover:bg-ink/[.08]"
+          >
+            {order === "asc" ? "↑" : "↓"}
+          </button>
+        </div>
+
+        {/* Genre — mobile only, behind a disclosure. */}
+        {genres.length > 0 ? (
+          <div className="md:hidden">
+            <button
+              type="button"
+              onClick={() => setGenresOpen((v) => !v)}
+              aria-expanded={genresOpen}
+              className={`min-h-8 border-2 px-3 text-[12px] font-medium ${
+                activeGenre ? "border-accent bg-accent text-on-accent" : "border-rule"
+              }`}
+            >
+              {activeGenre ?? "Genre"} ▾
+            </button>
+          </div>
+        ) : null}
+
+        {hasActive ? (
+          <button
+            type="button"
+            onClick={clearAll}
+            className="ml-auto min-h-8 px-2 text-[12px] font-medium text-accent underline"
           >
             Clear filters
           </button>
         ) : null}
       </div>
-    </div>
-  );
-}
 
-function Chip({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-pressed={active}
-      className={`min-h-9 shrink-0 whitespace-nowrap rounded-full px-3 text-xs font-medium transition-colors ${
-        active
-          ? "border border-accent bg-accent-soft text-accent"
-          : "bg-surface-sunk text-ink-muted"
-      }`}
-    >
-      {children}
-    </button>
+      {genresOpen ? (
+        <div className="flex flex-wrap gap-2 border-t-2 border-rule p-2 md:hidden">
+          {shownGenres.map((g) => (
+            <button
+              key={g.value}
+              type="button"
+              onClick={() => toggle("genre", g.value)}
+              aria-pressed={activeGenre === g.value}
+              className={`min-h-8 border-2 px-3 text-[12px] ${
+                activeGenre === g.value
+                  ? "border-accent bg-accent text-on-accent"
+                  : "border-rule"
+              }`}
+            >
+              {g.label} <span className="tabular text-ink-muted">{g.count}</span>
+            </button>
+          ))}
+          {genres.length > GENRE_PREVIEW ? (
+            <button
+              type="button"
+              onClick={() => setShowAllGenres((v) => !v)}
+              className="min-h-8 px-2 text-[12px] text-accent underline"
+            >
+              {showAllGenres ? "Show fewer" : `Show all ${genres.length}`}
+            </button>
+          ) : null}
+        </div>
+      ) : null}
+    </div>
   );
 }

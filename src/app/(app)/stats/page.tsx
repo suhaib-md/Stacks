@@ -34,8 +34,9 @@ function Bar({ label, count, total, href }: { label: string; count: number; tota
           {count} <span className="text-ink-faint">· {percent}%</span>
         </span>
       </div>
-      <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-surface-sunk">
-        <div className="h-full rounded-full bg-accent" style={{ width: `${percent}%` }} />
+      <div className="mt-1 h-2 w-full overflow-hidden bg-progress-track">
+        {/* Ink, not acid: acid means reading progress and nothing else. */}
+        <div className="h-full bg-ink" style={{ width: `${percent}%` }} />
       </div>
     </>
   );
@@ -43,7 +44,7 @@ function Bar({ label, count, total, href }: { label: string; count: number; tota
   return (
     <li>
       {href ? (
-        <Link href={href} className="block rounded-card py-1 transition-colors hover:bg-surface-sunk">
+        <Link href={href} className="block py-1 transition-colors hover:bg-ink/[.06]">
           {body}
         </Link>
       ) : (
@@ -55,8 +56,8 @@ function Bar({ label, count, total, href }: { label: string; count: number; tota
 
 function Section({ title, note, children }: { title: string; note?: string; children: React.ReactNode }) {
   return (
-    <section className="mt-8 border-t border-rule pt-6">
-      <h2 className="text-sm font-medium">{title}</h2>
+    <section className="mt-8 border-t-2 border-rule pt-6">
+      <h2 className="lbl text-accent">{title}</h2>
       {note ? <p className="mt-1 text-xs text-ink-faint">{note}</p> : null}
       <ul className="mt-3 space-y-2">{children}</ul>
     </section>
@@ -71,7 +72,7 @@ export default async function StatsPage() {
   if (total === 0) {
     return (
       <>
-        <h1 className="font-display text-3xl font-semibold tracking-tight">Stats</h1>
+        <h1 className="disp text-[34px] md:text-[40px]">Stats</h1>
         <p className="mt-4 text-sm text-ink-muted">
           Nothing to count yet.{" "}
           <Link href="/add" className="underline">
@@ -106,7 +107,7 @@ export default async function StatsPage() {
 
   return (
     <>
-      <h1 className="font-display text-3xl font-semibold tracking-tight">Stats</h1>
+      <h1 className="disp text-[34px] md:text-[40px]">Stats</h1>
       <p className="mt-2 text-sm text-ink-muted tabular">
         {total} books · {totalPages.toLocaleString()} pages across {pages.length} with a known
         length

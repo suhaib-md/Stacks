@@ -33,21 +33,21 @@ export function BookActions({ bookId, title }: { bookId: string; title: string }
       <div className="mt-5 flex gap-3">
         <Link
           href={`/book/${bookId}/edit`}
-          className="min-h-11 rounded-card bg-surface px-4 text-sm font-medium leading-11"
+          className="min-h-11 bg-surface px-4 text-sm font-medium leading-11"
         >
           Edit
         </Link>
         <button
           type="button"
           onClick={() => setConfirming(true)}
-          className="min-h-11 rounded-card px-4 text-sm font-medium text-danger"
+          className="min-h-11 px-4 text-sm font-medium text-danger"
         >
           Delete
         </button>
       </div>
 
       <Sheet open={confirming} onClose={() => setConfirming(false)} labelledBy="delete-title">
-        <h2 id="delete-title" className="font-display text-xl">
+        <h2 id="delete-title" className="disp text-lg">
           Delete this book?
         </h2>
         {/* Name it explicitly — deletion is irreversible and there is no undo. */}
@@ -65,7 +65,7 @@ export function BookActions({ bookId, title }: { bookId: string; title: string }
           <button
             type="button"
             onClick={() => setConfirming(false)}
-            className="min-h-11 flex-1 rounded-card border border-rule px-4 text-sm font-medium"
+            className="min-h-11 flex-1 border-2 border-rule px-4 text-sm font-medium"
           >
             Keep it
           </button>
@@ -73,7 +73,7 @@ export function BookActions({ bookId, title }: { bookId: string; title: string }
             type="button"
             onClick={remove}
             disabled={pending}
-            className="min-h-11 flex-1 rounded-card bg-danger px-4 text-sm font-medium text-paper disabled:opacity-50"
+            className="min-h-11 flex-1 bg-danger px-4 text-sm font-medium text-paper disabled:opacity-50"
           >
             {pending ? "Deleting…" : "Delete"}
           </button>

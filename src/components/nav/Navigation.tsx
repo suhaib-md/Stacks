@@ -10,10 +10,10 @@ const Icon = ({ d }: { d: string }) => (
     viewBox="0 0 24 24"
     fill="none"
     stroke="currentColor"
-    strokeWidth={1.5}
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    className="size-5"
+    strokeWidth={1.75}
+    strokeLinecap="square"
+    strokeLinejoin="miter"
+    className="size-4"
     aria-hidden="true"
   >
     <path d={d} />
@@ -25,31 +25,43 @@ const DESTINATIONS: Destination[] = [
   { href: "/add", label: "Add", icon: <Icon d="M3 7V5h3M21 7V5h-3M3 17v2h3M21 17v2h-3M7 12h10" /> },
   { href: "/pick", label: "Pick", icon: <Icon d="M12 3l2.4 5.4 5.6.6-4.2 4 1.2 5.8L12 16l-5 2.8 1.2-5.8-4.2-4 5.6-.6z" /> },
   { href: "/stats", label: "Stats", icon: <Icon d="M5 20V10M12 20V4M19 20v-7" /> },
-  { href: "/settings", label: "Settings", icon: <Icon d="M12 15a3 3 0 100-6 3 3 0 000 6zM19 12l2-1-2-4-2 .6a7 7 0 00-2-1.2L14.5 4h-5L9 6.4a7 7 0 00-2 1.2L5 7 3 11l2 1-2 1 2 4 2-.6a7 7 0 002 1.2L9.5 20h5l.5-2.4a7 7 0 002-1.2l2 .6 2-4z" /> },
 ];
 
 function isActive(pathname: string, href: string): boolean {
   return href === "/" ? pathname === "/" : pathname.startsWith(href);
 }
 
-export function TopNav() {
+/**
+ * The rail's primary nav. Active is carried by accent text and a 2px accent
+ * marker flush against the rule — never by a fill, which the sheet reserves for
+ * a selected control.
+ */
+export function RailNav() {
   const pathname = usePathname();
+
   return (
-    <nav className="ml-auto hidden items-center gap-1 md:flex">
-      {DESTINATIONS.map((d) => (
-        <Link
-          key={d.href}
-          href={d.href}
-          aria-current={isActive(pathname, d.href) ? "page" : undefined}
-          className={`rounded-card px-3 py-2 text-sm font-medium transition-colors ${
-            isActive(pathname, d.href)
-              ? "bg-accent-soft text-accent"
-              : "text-ink-muted hover:bg-surface-sunk hover:text-ink"
-          }`}
-        >
-          {d.label}
-        </Link>
-      ))}
+    <nav aria-label="Primary">
+      <ul>
+        {DESTINATIONS.map((d) => {
+          const active = isActive(pathname, d.href);
+          return (
+            <li key={d.href}>
+              <Link
+                href={d.href}
+                aria-current={active ? "page" : undefined}
+                className={`flex min-h-9 items-center gap-3 border-l-2 px-4 text-[13px] font-medium transition-colors ${
+                  active
+                    ? "border-accent text-accent"
+                    : "border-transparent text-ink hover:bg-ink/[.06]"
+                }`}
+              >
+                {d.icon}
+                {d.label}
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
     </nav>
   );
 }
@@ -63,7 +75,7 @@ export function BottomTabs() {
   return (
     <nav
       aria-label="Primary"
-      className="fixed inset-x-0 bottom-0 z-30 border-t border-rule bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
+      className="fixed inset-x-0 bottom-0 z-30 border-t-2 border-rule bg-paper pb-[env(safe-area-inset-bottom)] md:hidden"
     >
       <ul className="flex">
         {DESTINATIONS.map((d) => {
@@ -73,7 +85,7 @@ export function BottomTabs() {
               <Link
                 href={d.href}
                 aria-current={active ? "page" : undefined}
-                className={`flex min-h-14 flex-col items-center justify-center gap-1 text-[11px] font-medium transition-colors ${
+                className={`flex min-h-12 flex-col items-center justify-center gap-1 text-[10px] font-medium uppercase tracking-[.14em] transition-colors ${
                   active ? "text-accent" : "text-ink-muted"
                 }`}
               >

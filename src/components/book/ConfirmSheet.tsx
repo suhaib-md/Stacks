@@ -124,7 +124,7 @@ function ConfirmSheetForm({
   if (state.kind === "duplicate") {
     return (
       <Sheet open={open} onClose={onClose} labelledBy={titleId}>
-        <h2 id={titleId} className="font-display text-xl">
+        <h2 id={titleId} className="disp text-lg">
           Already in your library
         </h2>
         <p className="mt-2 text-sm text-ink-muted">
@@ -134,14 +134,14 @@ function ConfirmSheetForm({
           <button
             type="button"
             onClick={onClose}
-            className="min-h-11 flex-1 rounded-card border border-rule px-4 text-sm font-medium"
+            className="min-h-11 flex-1 border-2 border-rule px-4 text-sm font-medium"
           >
             Keep going
           </button>
           {state.bookId ? (
             <Link
               href={`/book/${state.bookId}`}
-              className="flex min-h-11 flex-1 items-center justify-center rounded-card bg-accent px-4 text-sm font-medium text-paper"
+              className="flex min-h-11 flex-1 items-center justify-center bg-accent px-4 text-sm font-medium text-on-accent"
             >
               View it
             </Link>
@@ -163,16 +163,16 @@ function ConfirmSheetForm({
             alt=""
             width={72}
             height={108}
-            className="h-[108px] w-[72px] shrink-0 rounded-cover border border-rule object-cover"
+            className="h-[108px] w-[72px] shrink-0 border-2 border-rule object-cover"
           />
         ) : (
-          <div className="flex h-[108px] w-[72px] shrink-0 items-center justify-center rounded-cover border border-rule bg-surface-sunk text-[10px] text-ink-faint">
+          <div className="flex h-[108px] w-[72px] shrink-0 items-center justify-center border-2 border-rule bg-surface-sunk text-[10px] text-ink-faint">
             No cover
           </div>
         )}
 
         <div className="min-w-0 flex-1">
-          <h2 id={titleId} className="font-display text-lg leading-snug">
+          <h2 id={titleId} className="disp text-base leading-snug">
             {title || "Untitled"}
           </h2>
           {metadata?.publisher || metadata?.publishedYear ? (
@@ -188,7 +188,7 @@ function ConfirmSheetForm({
       </div>
 
       {!metadata ? (
-        <div className="mt-4 rounded-card bg-surface-sunk p-3 text-xs text-ink-muted">
+        <div className="mt-4 border-2 border-rule bg-surface-sunk p-3 text-xs text-ink-muted">
           <p>
             No metadata found{isbn ? " for that ISBN" : ""}. Fill in what you know —
             the book still gets catalogued.
@@ -211,7 +211,7 @@ function ConfirmSheetForm({
           <input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="w-full rounded-card bg-surface-sunk px-3 py-2 text-sm outline-none ring-accent focus:ring-2"
+            className="w-full border-2 border-rule bg-surface-sunk px-3 py-2 text-sm outline-none"
           />
         </label>
 
@@ -222,7 +222,7 @@ function ConfirmSheetForm({
           <input
             value={authors}
             onChange={(e) => setAuthors(e.target.value)}
-            className="w-full rounded-card bg-surface-sunk px-3 py-2 text-sm outline-none ring-accent focus:ring-2"
+            className="w-full border-2 border-rule bg-surface-sunk px-3 py-2 text-sm outline-none"
           />
         </label>
 
@@ -232,7 +232,7 @@ function ConfirmSheetForm({
             <select
               value={format}
               onChange={(e) => setFormat(e.target.value as BookFormat)}
-              className="w-full rounded-card bg-surface-sunk px-3 py-2 text-sm capitalize outline-none ring-accent focus:ring-2"
+              className="w-full border-2 border-rule bg-surface-sunk px-3 py-2 text-sm capitalize outline-none"
             >
               {BOOK_FORMATS.map((f) => (
                 <option key={f} value={f}>
@@ -247,7 +247,7 @@ function ConfirmSheetForm({
             <select
               value={status}
               onChange={(e) => setStatus(e.target.value as ReadStatus)}
-              className="w-full rounded-card bg-surface-sunk px-3 py-2 text-sm capitalize outline-none ring-accent focus:ring-2"
+              className="w-full border-2 border-rule bg-surface-sunk px-3 py-2 text-sm capitalize outline-none"
             >
               {READ_STATUSES.map((s) => (
                 <option key={s} value={s}>
@@ -269,7 +269,7 @@ function ConfirmSheetForm({
         <button
           type="button"
           onClick={onClose}
-          className="min-h-11 rounded-card border border-rule px-4 text-sm font-medium"
+          className="min-h-11 border-2 border-rule px-4 text-sm font-medium"
         >
           Skip
         </button>
@@ -277,7 +277,7 @@ function ConfirmSheetForm({
           type="button"
           onClick={save}
           disabled={state.kind === "saving"}
-          className="min-h-11 flex-1 rounded-card bg-accent px-4 text-sm font-medium text-paper disabled:opacity-50"
+          className="min-h-11 flex-1 bg-accent px-4 text-sm font-medium text-on-accent disabled:opacity-50"
         >
           {state.kind === "saving" ? "Saving…" : "Save to library"}
         </button>

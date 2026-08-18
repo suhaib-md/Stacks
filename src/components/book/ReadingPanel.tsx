@@ -46,9 +46,9 @@ export function ReadingPanel({ book }: { book: ApiBook }) {
   }
 
   return (
-    <section className="mt-6" aria-label="Reading">
+    <section className="mt-8 border-t-2 border-rule pt-4" aria-label="Reading">
       <div className="flex items-center justify-between gap-3">
-        <h2 className="text-sm font-medium text-ink-muted">Reading</h2>
+        <h2 className="lbl text-accent">Reading</h2>
         {indicator ? (
           <span
             role="status"
@@ -60,18 +60,26 @@ export function ReadingPanel({ book }: { book: ApiBook }) {
         ) : null}
       </div>
 
-      <div role="radiogroup" aria-label="Read status" className="mt-2 flex flex-wrap gap-2">
-        {READ_STATUSES.map((option) => (
+      {/* One segmented control, not four buttons and never a menu: the four
+          states are always visible so the choice reads at a glance. */}
+      <div
+        role="radiogroup"
+        aria-label="Read status"
+        className="mt-2 flex w-full border-2 border-rule"
+      >
+        {READ_STATUSES.map((option, i) => (
           <button
             key={option}
             type="button"
             role="radio"
             aria-checked={status === option}
             onClick={() => changeStatus(option)}
-            className={`min-h-11 rounded-full px-4 text-sm font-medium transition-colors ${
+            className={`min-h-10 flex-1 px-2 text-[12px] font-medium transition-colors ${
+              i > 0 ? "border-l-2 border-rule" : ""
+            } ${
               status === option
-                ? "border border-accent bg-accent-soft text-accent"
-                : "bg-surface-sunk text-ink-muted"
+                ? "bg-accent text-on-accent"
+                : "hover:bg-ink/[.08]"
             }`}
           >
             {STATUS_LABEL[option]}
@@ -88,7 +96,7 @@ export function ReadingPanel({ book }: { book: ApiBook }) {
       ) : null}
 
       <div className="mt-6">
-        <h3 className="text-sm font-medium text-ink-muted">Your rating</h3>
+        <h3 className="lbl text-accent">Your rating</h3>
         {askForRating ? (
           <p className="mt-1 text-xs text-accent">How was it?</p>
         ) : null}
@@ -105,7 +113,7 @@ export function ReadingPanel({ book }: { book: ApiBook }) {
       </div>
 
       <div className="mt-6 max-w-prose">
-        <h3 className="text-sm font-medium text-ink-muted">Notes</h3>
+        <h3 className="lbl text-accent">Notes</h3>
         <NotesEditor notes={book.notes} onSave={(notes) => void patch({ notes })} />
       </div>
     </section>

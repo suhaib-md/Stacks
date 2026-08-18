@@ -331,7 +331,7 @@ export function Scanner({
       {focusRing ? (
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute size-16 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-accent motion-safe:animate-[focusPulse_900ms_ease-out]"
+          className="pointer-events-none absolute size-16 -translate-x-1/2 -translate-y-1/2 border-2 border-accent motion-safe:animate-[focusPulse_900ms_ease-out]"
           style={{ left: `${focusRing.x}%`, top: `${focusRing.y}%` }}
         >
           <style>{`
@@ -349,8 +349,8 @@ export function Scanner({
       ) : (
         <div className="absolute inset-0 flex items-center justify-center p-6 text-center">
           {phase.kind === "denied" ? (
-            <div className="max-w-xs rounded-card bg-surface p-5">
-              <p className="font-display text-lg">Camera unavailable</p>
+            <div className="max-w-xs bg-surface p-5">
+              <p className="disp text-base">Camera unavailable</p>
               <p className="mt-2 text-sm text-ink-muted">{phase.message}</p>
               <p className="mt-3 text-xs text-ink-faint">
                 You can still add books by ISBN or by searching — the buttons below
@@ -358,8 +358,8 @@ export function Scanner({
               </p>
             </div>
           ) : stalled ? (
-            <div className="max-w-xs rounded-card bg-surface p-5">
-              <p className="font-display text-lg">Camera didn&apos;t start</p>
+            <div className="max-w-xs bg-surface p-5">
+              <p className="disp text-base">Camera didn&apos;t start</p>
               <p className="mt-2 text-sm text-ink-muted">
                 Try reloading. If it keeps happening, the buttons below still work.
               </p>
@@ -381,8 +381,8 @@ export function Scanner({
           onClick={toggleTorch}
           aria-pressed={torchOn}
           aria-label={torchOn ? "Turn torch off" : "Turn torch on"}
-          className={`absolute right-4 top-4 flex size-11 items-center justify-center rounded-full backdrop-blur ${
-            torchOn ? "bg-accent text-paper" : "bg-black/50 text-white"
+          className={`absolute right-4 top-4 flex size-11 items-center justify-center backdrop-blur ${
+            torchOn ? "bg-accent text-on-accent" : "bg-black/50 text-white"
           }`}
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="size-5">
@@ -394,7 +394,7 @@ export function Scanner({
       <Link
         href="/"
         aria-label="Back to library"
-        className="absolute left-4 top-4 flex size-11 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur"
+        className="absolute left-4 top-4 flex size-11 items-center justify-center bg-black/50 text-white backdrop-blur"
       >
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="size-5">
           <path d="M15 18l-6-6 6-6" strokeLinecap="round" strokeLinejoin="round" />
@@ -408,13 +408,13 @@ function Viewfinder({ paused }: { paused: boolean }) {
   return (
     <div aria-hidden="true" className="pointer-events-none absolute inset-0">
       {/* Dimmed surround with a clear window, drawn as four panels so the middle
-          stays fully transparent — a box-shadow spread would tint the video. */}
+          stays fully transparent — a box-spread would tint the video. */}
       <div className="absolute inset-x-0 top-0 h-[calc(50%-5rem)] bg-black/55" />
       <div className="absolute inset-x-0 bottom-0 h-[calc(50%-5rem)] bg-black/55" />
       <div className="absolute left-0 top-[calc(50%-5rem)] h-40 w-[calc(50%-9rem)] bg-black/55" />
       <div className="absolute right-0 top-[calc(50%-5rem)] h-40 w-[calc(50%-9rem)] bg-black/55" />
 
-      <div className="absolute left-1/2 top-1/2 h-40 w-72 -translate-x-1/2 -translate-y-1/2 rounded-lg border-2 border-white/70">
+      <div className="absolute left-1/2 top-1/2 h-40 w-72 -translate-x-1/2 -translate-y-1/2 border-2 border-white/70">
         {!paused ? (
           <div className="absolute inset-x-0 top-1/2 h-0.5 bg-accent motion-safe:animate-[scanline_2s_ease-in-out_infinite]" />
         ) : null}

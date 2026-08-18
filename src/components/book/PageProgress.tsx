@@ -51,7 +51,7 @@ export function PageProgress({
           }}
           inputMode="numeric"
           aria-label="Current page"
-          className="min-h-11 w-16 rounded-card bg-surface-sunk text-center text-sm tabular outline-none ring-accent focus:ring-2"
+          className="min-h-11 w-16 border-2 border-rule bg-surface-sunk text-center text-sm tabular outline-none"
         />
 
         <StepButton
@@ -75,7 +75,7 @@ export function PageProgress({
       {percent !== null ? (
         <div className="mt-3 flex items-center gap-3">
           <div
-            className="h-1 flex-1 overflow-hidden rounded-full bg-surface-sunk"
+            className="h-2.5 flex-1 overflow-hidden bg-progress-track"
             role="progressbar"
             aria-valuenow={percent}
             aria-valuemin={0}
@@ -83,7 +83,7 @@ export function PageProgress({
             aria-label="Reading progress"
           >
             <div
-              className="h-full bg-accent transition-[width] duration-200"
+              className="h-full bg-progress transition-[width] duration-200"
               style={{ width: `${percent}%` }}
             />
           </div>
@@ -113,7 +113,7 @@ function StepButton({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="min-h-11 rounded-card bg-surface-sunk px-3 text-sm font-medium tabular disabled:opacity-40"
+      className="min-h-11 border-2 border-rule bg-surface-sunk px-3 text-sm font-medium tabular disabled:opacity-40"
     >
       {children}
     </button>

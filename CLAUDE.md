@@ -34,8 +34,8 @@ Read these before making changes. They are the source of truth — if code and d
 | Hosting | Cloudflare Workers |
 | Database | Cloudflare D1 (SQLite) |
 | ORM | Drizzle ORM + drizzle-kit |
-| Styling | Tailwind CSS with CSS-variable design tokens |
-| Fonts | Fraunces (display, self-hosted variable subset) + system sans |
+| Styling | Tailwind v4, CSS-variable tokens — "the ledger" (see docs/uiux.md) |
+| Fonts | Archivo, variable on the width axis — the display cut is the same font widened |
 | Scanner | Native `BarcodeDetector`, `html5-qrcode` fallback |
 | Metadata | Open Library (primary), Google Books (fallback) |
 | Auth | Signed session cookie from a single passphrase |
@@ -51,6 +51,7 @@ src/
     (auth)/login/           passphrase gate
     (app)/
       page.tsx              library — grid/list, filters, Currently Reading
+      @rail/                desktop rail slot (Library puts its filters here)
       book/[id]/            detail, edit
       add/                  scanner, search, manual
       settings/
@@ -70,7 +71,7 @@ src/
   lib/
     isbn.ts                 validation, 10↔13 conversion, normalization
     providers/              openlibrary.ts, googlebooks.ts, merge.ts
-    color.ts                dominant-color extraction
+    cover.ts                generated cover art, palette, contrast
     csv.ts                  RFC 4180 export
     auth.ts                 cookie signing/verification
   middleware.ts             session gate
@@ -119,11 +120,18 @@ Deploys happen automatically on push to `main` via Cloudflare Git integration. *
 ### Business rules belong on the server
 Status-transition side effects (`started_at`, `finished_at`, `current_page` reset, page clamping, `updated_at`) are applied in the PATCH handler, never only in the UI. See [docs/trd.md §6](docs/trd.md#6-business-rules-enforced-server-side).
 
-### Styling
-- Only semantic tokens (`bg-surface`, `text-ink`, `border-rule`). No raw hex in components.
-- Spacing is on the 4/8/12/16/24/32/48 scale. Nothing off-scale.
-- Both themes must be handled on every new surface. Dark is warm charcoal and amber — never `#000` or `#FFF`.
-- Status is never conveyed by color alone.
+### Styling — "the ledger" (v2)
+- Only semantic tokens (`bg-paper`, `text-ink`, `border-rule`, `bg-progress`). No raw hex in components.
+- **Radius is 0 everywhere.** No `rounded-*` classes, including on covers.
+- **No elevation.** No `shadow-*`. Regions are divided by rules: `border-2 border-rule` major, `border-rule-minor` for rows inside one table.
+- **Red commits.** `bg-accent` marks the one action that adds or changes something; active nav and section labels borrow it. Nothing else does.
+- **Acid is progress.** `bg-progress` (`#d6f34a`) means reading progress and appears nowhere else — stat bars are ink.
+- A selected control is a solid accent fill with `text-on-accent`, never a tint.
+- Everything flush left; `tabular` on every count, page and date.
+- Both themes on every new surface. Dark inverts ground and ink; red, acid and covers are untouched.
+- Status is never conveyed by colour. DNF is 50% opacity and nothing else.
+
+Full spec: [docs/uiux.md](docs/uiux.md). Where a screen disagrees with it, the sheet wins.
 
 ---
 
@@ -152,9 +160,8 @@ These cost real debugging time in Phase 0. Don't undo them.
 - **Google Books' keyless quota is exhausted in practice** — anonymous requests share one project and return 429. Everything still works via Open Library, but descriptions and search ranking need a `GOOGLE_BOOKS_KEY`. See [docs/implementation-plan.md](docs/implementation-plan.md#google-books-key).
 - **Lookup timeouts degrade, never throw.** 4 s per provider, no retries. The confirm sheet opens with whatever was found — including nothing.
 - **Open Library `subjects` are not genres.** They are LCSH catalogue headings — a single shelf yields "Alice (fictitious character : carroll), fiction", "Viajes alrededor del mundo", "desertion". Feeding them into the genre facet buried the library under thirty-odd useless chips. Genre comes from Google Books' BISAC-style categories or from you; null is the honest answer otherwise.
-- **Books without artwork get a generated cover, not an upload.** A chosen colour from `COVER_PALETTE` (or one derived from the title) rendered as a gradient with the title typeset on it. Stored in the existing `cover_color` — no new column, and no image bytes anywhere near the library query, which selects sixty rows at a time.
-- **Every colour in `src/lib/cover.ts` is hex.** `shade()` parses hex only, so returning an `hsl()` string from `titleColor()` made every gradient silently flat — three identical stops, no error.
-- **Cover CORS.** Many cover hosts don't send CORS headers, which breaks canvas color extraction. Fail silently to the neutral accent; don't log on every detail view.
+- **Books without artwork get a generated cover, not an upload.** A chosen colour from `COVER_PALETTE` (or one derived from the title) rendered as a flat field with the title typeset on it. Stored in the existing `cover_color` — no new column, and no image bytes anywhere near the library query, which selects sixty rows at a time.
+- **Every colour in `src/lib/cover.ts` is hex.** `shade()` and `readableOn()` both parse hex only; returning an `hsl()` string from `titleColor()` fails silently rather than loudly.
 - **CSV escaping.** Notes contain commas, quotes, and newlines. RFC 4180 quoting with doubled inner quotes, UTF-8 BOM for Excel.
 - **The service worker must never cache a redirected response.** An unauthenticated request to `/` follows a 307 to `/login`, and `fetch` reports that as a successful 200. Cache it and the login page is served under `/` to a signed-in user, offline, permanently. `isCacheable()` in [public/sw.js](public/sw.js) guards this.
 - **Never cache auth, `/add`, or exports.** A cached session decision is a bug, a scanner with no lookup is a false promise, and a stale backup is worse than no backup.

@@ -60,10 +60,10 @@ export function ThemeToggle() {
           role="radio"
           aria-checked={theme === option}
           onClick={() => apply(option)}
-          className={`min-h-11 rounded-full px-4 text-sm font-medium capitalize transition-colors ${
+          className={`min-h-11 px-4 text-sm font-medium capitalize transition-colors ${
             theme === option
-              ? "border border-accent bg-accent-soft text-accent"
-              : "bg-surface-sunk text-ink-muted"
+              ? "border-2 border-accent bg-accent text-on-accent"
+              : "border-2 border-rule text-ink-muted"
           }`}
         >
           {option}

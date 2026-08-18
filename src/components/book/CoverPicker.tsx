@@ -40,7 +40,7 @@ export function CoverPicker({
       </span>
 
       <div className="flex gap-4">
-        <div className="h-[132px] w-22 shrink-0 overflow-hidden rounded-cover border border-rule">
+        <div className="h-[132px] w-22 shrink-0 overflow-hidden border-2 border-rule">
           {/* Always previews the generated design, even when artwork exists, so
               you can see what you're choosing. */}
           <GeneratedCover
@@ -58,7 +58,7 @@ export function CoverPicker({
               onClick={() => onChange(null)}
               aria-pressed={value === null}
               title="Automatic — derived from the title"
-              className={`size-8 rounded-full border-2 ${
+              className={`size-8 border-2 ${
                 value === null ? "border-accent" : "border-rule"
               }`}
               style={{ background: generatedCoverBackground(automatic) }}
@@ -73,7 +73,7 @@ export function CoverPicker({
                 onClick={() => onChange(swatch.hex)}
                 aria-pressed={value === swatch.hex}
                 title={swatch.name}
-                className={`size-8 rounded-full border-2 ${
+                className={`size-8 border-2 ${
                   value === swatch.hex ? "border-accent" : "border-rule"
                 }`}
                 style={{ background: generatedCoverBackground(swatch.hex) }}

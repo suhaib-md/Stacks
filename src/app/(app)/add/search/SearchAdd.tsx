@@ -61,12 +61,12 @@ export function SearchAdd() {
             onChange={(e) => setQuery(e.target.value)}
             autoComplete="off"
             placeholder="the dispossessed le guin"
-            className="min-h-11 flex-1 rounded-card bg-surface-sunk px-4 text-base outline-none ring-accent focus:ring-2"
+            className="min-h-11 flex-1 border-2 border-rule bg-surface-sunk px-4 text-base outline-none"
           />
           <button
             type="submit"
             disabled={pending || query.trim().length < 2}
-            className="min-h-11 rounded-card bg-accent px-5 text-sm font-medium text-paper disabled:opacity-50"
+            className="min-h-11 bg-accent px-5 text-sm font-medium text-on-accent disabled:opacity-50"
           >
             {pending ? "Searching…" : "Search"}
           </button>
@@ -75,13 +75,13 @@ export function SearchAdd() {
 
       {results !== null && results.length === 0 && !pending ? (
         <div className="mt-8 text-center">
-          <p className="font-display text-lg">Nothing found</p>
+          <p className="disp text-base">Nothing found</p>
           <p className="mt-1 text-sm text-ink-muted">
             Regional and older editions are often missing from both catalogues.
           </p>
           <Link
             href="/add/manual"
-            className="mt-4 inline-flex min-h-11 items-center rounded-card bg-accent px-4 text-sm font-medium text-paper"
+            className="mt-4 inline-flex min-h-11 items-center bg-accent px-4 text-sm font-medium text-on-accent"
           >
             Add it manually
           </Link>
@@ -89,7 +89,7 @@ export function SearchAdd() {
       ) : null}
 
       {results && results.length > 0 ? (
-        <ul className="mt-6 divide-y divide-rule">
+        <ul className="mt-6 divide-y divide-rule-minor">
           {results.map((result, index) => {
             const key = resultKey(result);
             const saved = savedKeys.has(key);
@@ -98,7 +98,7 @@ export function SearchAdd() {
                 <button
                   type="button"
                   onClick={() => setDraft({ metadata: result, isbn: result.isbn13, source: "search" })}
-                  className="flex w-full items-start gap-3 py-3 text-left transition-colors hover:bg-surface-sunk"
+                  className="flex w-full items-start gap-3 py-3 text-left transition-colors hover:bg-ink/[.06]"
                 >
                   {result.coverUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element -- remote covers are unoptimized by design
@@ -107,10 +107,10 @@ export function SearchAdd() {
                       alt=""
                       width={40}
                       height={60}
-                      className="h-[60px] w-10 shrink-0 rounded-cover border border-rule object-cover"
+                      className="h-[60px] w-10 shrink-0 border-2 border-rule object-cover"
                     />
                   ) : (
-                    <div className="h-[60px] w-10 shrink-0 rounded-cover border border-rule bg-surface-sunk" />
+                    <div className="h-[60px] w-10 shrink-0 border-2 border-rule bg-surface-sunk" />
                   )}
                   <span className="min-w-0 flex-1">
                     <span className="block truncate font-display text-base">{result.title}</span>

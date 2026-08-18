@@ -26,7 +26,7 @@ function Field({ label, hint, children, htmlFor }: FieldProps) {
 }
 
 const inputClass =
-  "w-full rounded-card bg-surface-sunk px-3 py-2 text-sm outline-none ring-accent focus:ring-2";
+"w-full border-2 border-rule bg-surface-sunk px-3 py-2 text-sm outline-none";
 
 export function ManualAdd({
   initialIsbn,
@@ -185,7 +185,7 @@ export function ManualAdd({
       <button
         type="submit"
         disabled={pending}
-        className="min-h-11 w-full rounded-card bg-accent px-4 text-sm font-medium text-paper disabled:opacity-50"
+        className="min-h-11 w-full bg-accent px-4 text-sm font-medium text-on-accent disabled:opacity-50"
       >
         {pending ? "Saving…" : "Save to library"}
       </button>

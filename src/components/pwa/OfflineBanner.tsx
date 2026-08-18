@@ -29,9 +29,13 @@ export function OfflineBanner() {
   return (
     <div
       role="status"
-      className="sticky top-14 z-20 -mx-4 border-b border-rule bg-accent-soft px-4 py-2 text-center text-xs text-accent"
+      className="mb-4 border-l-2 border-accent bg-surface-sunk px-3 py-2.5"
     >
-      Offline — showing your last synced library. Adding books needs a connection.
+      {/* States what happened, then what still works — flush left, never centred. */}
+      <p className="text-[13px] font-medium">Offline</p>
+      <p className="mt-0.5 text-[12px] text-ink-muted">
+        Showing your last synced library. Adding books needs a connection.
+      </p>
     </div>
   );
 }

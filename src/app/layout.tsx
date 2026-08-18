@@ -1,11 +1,17 @@
 import type { Metadata, Viewport } from "next";
-import { Fraunces } from "next/font/google";
+import { Archivo } from "next/font/google";
 import "./globals.css";
 
-const fraunces = Fraunces({
+/**
+ * One family, two voices. Archivo is variable on the width axis, so the
+ * "expanded" display cut is the same font widened rather than a second
+ * download — see the `.disp` / `.font-display` rules in globals.css.
+ */
+const archivo = Archivo({
   subsets: ["latin"],
   display: "swap",
-  variable: "--font-fraunces",
+  axes: ["wdth"],
+  variable: "--font-archivo",
 });
 
 export const metadata: Metadata = {
@@ -16,8 +22,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#faf7f2" },
-    { media: "(prefers-color-scheme: dark)", color: "#16130f" },
+    { media: "(prefers-color-scheme: light)", color: "#f3f2f2" },
+    { media: "(prefers-color-scheme: dark)", color: "#131211" },
   ],
   width: "device-width",
   initialScale: 1,
@@ -42,7 +48,7 @@ const THEME_BOOTSTRAP = `
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${fraunces.variable} h-full`} suppressHydrationWarning>
+    <html lang="en" className={`${archivo.variable} h-full`} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOTSTRAP }} />
       </head>

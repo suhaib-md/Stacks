@@ -38,39 +38,47 @@ export function LoginForm({ next }: { next: string }) {
   }
 
   return (
-    <form onSubmit={onSubmit} className="mt-8 space-y-4">
-      <div>
-        <label htmlFor="passphrase" className="mb-2 block text-sm font-medium">
-          Passphrase
-        </label>
-        <input
-          id="passphrase"
-          name="passphrase"
-          type="password"
-          autoComplete="current-password"
-          autoFocus
-          required
-          value={passphrase}
-          onChange={(e) => setPassphrase(e.target.value)}
-          aria-invalid={error ? true : undefined}
-          aria-describedby={error ? "passphrase-error" : undefined}
-          className="w-full rounded-card bg-surface-sunk px-4 py-3 text-base outline-none ring-accent transition focus:ring-2"
-        />
-      </div>
-
-      {error ? (
-        <p id="passphrase-error" role="alert" className="text-sm text-danger">
-          {error}
-        </p>
-      ) : null}
+    <form onSubmit={onSubmit} className="mt-8">
+      <label htmlFor="passphrase" className="lbl block text-accent">
+        Passphrase
+      </label>
+      <input
+        id="passphrase"
+        name="passphrase"
+        type="password"
+        autoComplete="current-password"
+        autoFocus
+        required
+        value={passphrase}
+        onChange={(e) => setPassphrase(e.target.value)}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={error ? "passphrase-error" : undefined}
+        className="mt-2 min-h-12 w-full border-2 border-rule bg-surface-sunk px-3 text-base tracking-[.2em] outline-none"
+      />
 
       <button
         type="submit"
         disabled={pending || passphrase.length === 0}
-        className="min-h-11 w-full rounded-card bg-accent px-4 py-3 font-medium text-paper transition disabled:opacity-50"
+        className="mt-4 flex min-h-12 w-full items-center justify-between bg-accent px-4 text-[13px] font-medium text-on-accent transition-colors hover:bg-accent-pressed disabled:opacity-45"
       >
-        {pending ? "Checking…" : "Sign in"}
+        <span>{pending ? "Checking…" : "Unlock"}</span>
+        <span aria-hidden="true">&rarr;</span>
       </button>
+
+      {/* States what happened, then the way out — never a lone red toast. */}
+      {error ? (
+        <div
+          id="passphrase-error"
+          role="alert"
+          className="mt-4 border-l-2 border-accent bg-surface-sunk px-3 py-2.5"
+        >
+          <p className="text-[13px] font-medium">{error}</p>
+          <p className="mt-1 text-[12px] text-ink-muted">
+            Check the phrase and try again. Repeated failures lock the gate for fifteen
+            minutes.
+          </p>
+        </div>
+      ) : null}
     </form>
   );
 }

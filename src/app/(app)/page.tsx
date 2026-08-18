@@ -62,18 +62,45 @@ export default async function LibraryPage({
 
   const total = counted[0]?.total ?? 0;
   const genres = genreRows
-    .map((r) => ({ name: r.genre as string, count: r.count }))
-    .filter((g) => Boolean(g.name));
+    .filter((r) => Boolean(r.genre))
+    .map((r) => ({ value: r.genre as string, label: r.genre as string, count: r.count }));
+
+  // The header states the size of the shelf, not of the current filter.
+  const [{ shelfBooks, shelfPages }] = await db
+    .select({
+      shelfBooks: sql<number>`count(*)`,
+      shelfPages: sql<number>`coalesce(sum(${books.pageCount}), 0)`,
+    })
+    .from(books);
   const filtered = hasActiveFilters(filters);
   const totalPages = Math.max(1, Math.ceil(total / filters.perPage));
 
   return (
     <>
-      <div className="flex items-baseline justify-between gap-4">
-        <h1 className="font-display text-3xl font-semibold tracking-tight">Library</h1>
-        <span className="shrink-0 text-sm text-ink-muted tabular">
-          {total} {total === 1 ? "book" : "books"}
-        </span>
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 className="disp text-[34px] md:text-[40px]">Library</h1>
+          <p className="mt-1.5 text-[13px] text-ink-muted tabular">
+            {filtered ? (
+              <>
+                {total.toLocaleString()} of {shelfBooks.toLocaleString()} shown
+              </>
+            ) : (
+              <>
+                {shelfBooks.toLocaleString()} {shelfBooks === 1 ? "book" : "books"} ·{" "}
+                {shelfPages.toLocaleString()} pages
+              </>
+            )}
+          </p>
+        </div>
+
+        {/* The only red on the screen: the action that adds something. */}
+        <Link
+          href="/add"
+          className="min-h-10 bg-accent px-5 text-[13px] font-medium leading-10 text-on-accent"
+        >
+          Scan a book
+        </Link>
       </div>
 
       {/* Hidden entirely rather than shown empty when nothing is being read. */}
@@ -103,14 +130,15 @@ export default async function LibraryPage({
 function EmptyState({ filtered }: { filtered: boolean }) {
   if (filtered) {
     return (
-      <div className="mt-16 flex flex-col items-center text-center">
-        <p className="font-display text-xl">No books match these filters</p>
-        <p className="mt-2 max-w-xs text-sm text-ink-muted">
+      // Quiet, and it stays put: the library is right there behind it.
+      <div className="border-b-2 border-rule py-6">
+        <p className="disp text-lg">No books match these filters</p>
+        <p className="mt-1.5 max-w-md text-[13px] text-ink-muted">
           Your library isn&apos;t empty — this search just came up short.
         </p>
         <Link
           href="/"
-          className="mt-6 inline-flex min-h-11 items-center rounded-card border border-rule px-5 text-sm font-medium"
+          className="mt-4 inline-flex min-h-9 items-center border-2 border-rule px-4 text-[12px] font-medium hover:bg-ink/[.08]"
         >
           Clear filters
         </Link>
@@ -119,30 +147,33 @@ function EmptyState({ filtered }: { filtered: boolean }) {
   }
 
   return (
-    <div className="mt-16 flex flex-col items-center text-center">
-      <svg
-        viewBox="0 0 64 64"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth={1.5}
-        aria-hidden="true"
-        className="size-16 text-ink-faint"
-      >
-        <rect x="10" y="20" width="12" height="30" rx="1.5" />
-        <rect x="24" y="14" width="10" height="36" rx="1.5" />
-        <path d="M36 50l6-32 10 2-6 32z" strokeLinejoin="round" />
-        <path d="M8 50h48" strokeLinecap="round" />
-      </svg>
-      <p className="mt-4 font-display text-xl">Your shelves are empty</p>
-      <p className="mt-2 max-w-xs text-sm text-ink-muted">
-        Point the camera at a barcode and it&apos;s catalogued in one tap.
+    // A poster with one instruction.
+    <div className="mt-10 max-w-2xl border-t-2 border-rule pt-10">
+      <span className="lbl text-accent">Nothing catalogued yet</span>
+      <p className="disp mt-4 text-[38px] leading-none md:text-[54px]">
+        Your shelves are empty.
       </p>
-      <Link
-        href="/add"
-        className="mt-6 inline-flex min-h-11 items-center rounded-card bg-accent px-5 text-sm font-medium text-paper"
-      >
-        Scan your first book
-      </Link>
+      <p className="mt-5 max-w-lg text-[13px] leading-relaxed text-ink-muted">
+        Point the camera at a barcode and the book is catalogued in one tap — title,
+        author, edition, length and cover, without typing anything.
+      </p>
+      <div className="mt-7 flex flex-wrap items-center gap-3">
+        <Link
+          href="/add"
+          className="min-h-11 bg-accent px-5 text-[13px] font-medium leading-[2.75rem] text-on-accent"
+        >
+          Scan your first book
+        </Link>
+        <Link
+          href="/add/search"
+          className="min-h-11 border-2 border-rule px-4 text-[13px] font-medium leading-[2.6rem] hover:bg-ink/[.08]"
+        >
+          Search by title
+        </Link>
+        <Link href="/add/manual" className="text-[13px] text-ink-muted underline">
+          Enter one by hand
+        </Link>
+      </div>
     </div>
   );
 }
@@ -168,19 +199,25 @@ function Pagination({
   };
 
   return (
-    <nav className="mt-8 flex items-center justify-between" aria-label="Pagination">
+    <nav className="mt-8 flex items-center justify-between border-t-2 border-rule pt-4" aria-label="Pagination">
       {page > 1 ? (
-        <Link href={href(page - 1)} className="min-h-11 rounded-card border border-rule px-4 text-sm leading-[2.75rem]">
+        <Link
+          href={href(page - 1)}
+          className="min-h-9 border-2 border-rule px-4 text-[12px] font-medium leading-[2.1rem] hover:bg-ink/[.08]"
+        >
           Previous
         </Link>
       ) : (
         <span />
       )}
-      <span className="text-xs text-ink-muted tabular">
+      <span className="lbl text-ink-muted">
         Page {page} of {totalPages}
       </span>
       {page < totalPages ? (
-        <Link href={href(page + 1)} className="min-h-11 rounded-card border border-rule px-4 text-sm leading-[2.75rem]">
+        <Link
+          href={href(page + 1)}
+          className="min-h-9 border-2 border-rule px-4 text-[12px] font-medium leading-[2.1rem] hover:bg-ink/[.08]"
+        >
           Next
         </Link>
       ) : (

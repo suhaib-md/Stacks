@@ -4,7 +4,7 @@ import { useState } from "react";
 import { MIN_PASSPHRASE_LENGTH } from "@/lib/passphrase";
 
 const inputClass =
-  "w-full rounded-card bg-surface-sunk px-3 py-2 text-sm outline-none ring-accent focus:ring-2";
+"w-full border-2 border-rule bg-surface-sunk px-3 py-2 text-sm outline-none";
 
 export function ChangePassphrase() {
   const [open, setOpen] = useState(false);
@@ -62,7 +62,7 @@ export function ChangePassphrase() {
             setOpen(true);
             setDone(false);
           }}
-          className="mt-2 min-h-11 rounded-card border border-rule px-4 text-sm font-medium"
+          className="mt-2 min-h-11 border-2 border-rule px-4 text-sm font-medium"
         >
           Change passphrase
         </button>
@@ -130,14 +130,14 @@ export function ChangePassphrase() {
         <button
           type="button"
           onClick={() => setOpen(false)}
-          className="min-h-11 rounded-card border border-rule px-4 text-sm font-medium"
+          className="min-h-11 border-2 border-rule px-4 text-sm font-medium"
         >
           Cancel
         </button>
         <button
           type="submit"
           disabled={pending}
-          className="min-h-11 flex-1 rounded-card bg-accent px-4 text-sm font-medium text-paper disabled:opacity-50"
+          className="min-h-11 flex-1 bg-accent px-4 text-sm font-medium text-on-accent disabled:opacity-50"
         >
           {pending ? "Changing…" : "Change passphrase"}
         </button>

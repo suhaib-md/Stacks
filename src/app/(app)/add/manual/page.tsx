@@ -12,7 +12,7 @@ export default async function ManualPage({
 
   return (
     <>
-      <h1 className="font-display text-3xl font-semibold tracking-tight">Add a book</h1>
+      <h1 className="disp text-[34px] md:text-[40px]">Add a book</h1>
       <AddNav />
       <p className="mt-4 max-w-prose text-sm text-ink-muted">
         For books the catalogues don&apos;t have — older printings and regional editions

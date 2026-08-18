@@ -3,47 +3,12 @@ import type { Book } from "@/db/schema";
 import { formatAuthors } from "@/db/serde";
 import { CoverImage } from "./CoverImage";
 
-/**
- * Status is never conveyed by colour alone (docs/uiux.md §9): Reading gets a
- * ribbon shape, Finished a check icon, DNF reduced opacity plus a label, and
- * Unread no adornment at all — the default state doesn't deserve decoration.
- */
-function StatusMark({ status }: { status: Book["readStatus"] }) {
-  if (status === "reading") {
-    return (
-      <span
-        title="Reading"
-        className="absolute left-2 top-0 h-7 w-4 bg-accent shadow-sm [clip-path:polygon(0_0,100%_0,100%_100%,50%_78%,0_100%)]"
-      >
-        <span className="sr-only">Reading</span>
-      </span>
-    );
-  }
-
-  if (status === "finished") {
-    return (
-      <span
-        title="Finished"
-        className="absolute bottom-1.5 right-1.5 flex size-5 items-center justify-center rounded-full bg-success text-white shadow"
-      >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3} className="size-3">
-          <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-        <span className="sr-only">Finished</span>
-      </span>
-    );
-  }
-
-  if (status === "dnf") {
-    return (
-      <span className="absolute bottom-1.5 left-1.5 rounded-full bg-ink/80 px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wide text-paper">
-        DNF
-      </span>
-    );
-  }
-
-  return null;
-}
+const STATUS_LABEL: Record<Book["readStatus"], string> = {
+  unread: "Unread",
+  reading: "Reading",
+  finished: "Finished",
+  dnf: "Did not finish",
+};
 
 export type SelectionProps = {
   /** True while bulk-edit mode is active: taps select instead of navigating. */
@@ -53,51 +18,72 @@ export type SelectionProps = {
   onLongPress: () => void;
 };
 
-export function CoverTile({
-  book,
-  selection,
-}: {
-  book: Book;
-  selection?: SelectionProps;
-}) {
+/** Year · length · format, in that order, skipping whatever isn't known. */
+function factLine(book: Book): string {
+  return [
+    book.publishedYear,
+    book.pageCount ? `${book.pageCount}pp` : null,
+    book.format[0].toUpperCase() + book.format.slice(1),
+  ]
+    .filter(Boolean)
+    .join(" · ");
+}
+
+function statusLine(book: Book): string {
+  if (book.readStatus === "reading" && book.pageCount) {
+    return `Reading · ${Math.min(100, Math.round((book.currentPage / book.pageCount) * 100))}%`;
+  }
+  return STATUS_LABEL[book.readStatus];
+}
+
+/**
+ * A cover and its caption block — title, author, the facts, the status.
+ *
+ * Status is words, never a hue. The one exception is did-not-finish, which
+ * drops the cover to 50%: per the sheet, nothing else marks it.
+ */
+export function CoverTile({ book, selection }: { book: Book; selection?: SelectionProps }) {
   const authors = formatAuthors(book.authors);
+  const dnf = book.readStatus === "dnf";
 
   const art = (
     <>
       <div
-        className={`relative aspect-[2/3] w-full overflow-hidden rounded-cover border bg-surface-sunk transition-transform duration-100 group-active:scale-[0.97] ${
-          selection?.selected ? "border-accent ring-2 ring-accent" : "border-rule"
-        } ${book.readStatus === "dnf" ? "opacity-55 saturate-50" : ""}`}
+        className={`relative aspect-[2/3] w-full overflow-hidden border-2 bg-surface-sunk ${
+          selection?.selected ? "border-accent" : "border-rule"
+        } ${dnf ? "opacity-50" : ""}`}
       >
         <CoverImage
           src={book.coverUrl}
           title={book.title}
           authors={authors}
           coverColor={book.coverColor}
-          sizes="(max-width: 480px) 33vw, (max-width: 768px) 25vw, (max-width: 1024px) 20vw, 16vw"
+          sizes="(max-width: 480px) 45vw, (max-width: 768px) 30vw, (max-width: 1024px) 22vw, 15vw"
           className="h-full w-full"
         />
-        <StatusMark status={book.readStatus} />
 
         {selection?.active ? (
           <span
             aria-hidden="true"
-            className={`absolute right-1.5 top-1.5 flex size-5 items-center justify-center rounded-full border-2 ${
-              selection.selected
-                ? "border-accent bg-accent text-paper"
-                : "border-white/80 bg-black/30"
+            className={`absolute right-1.5 top-1.5 flex size-4 items-center justify-center border-2 ${
+              selection.selected ? "border-accent bg-accent text-on-accent" : "border-paper bg-ink/40"
             }`}
           >
             {selection.selected ? (
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3} className="size-3">
-                <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round" />
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={4} className="size-2.5">
+                <path d="M5 13l4 4L19 7" />
               </svg>
             ) : null}
           </span>
         ) : null}
       </div>
-      <p className="mt-1.5 line-clamp-2 font-display text-[13px] leading-snug">{book.title}</p>
-      <p className="line-clamp-1 text-[11px] text-ink-muted">{authors}</p>
+
+      <div className="mt-2">
+        <p className="font-display line-clamp-2 text-[15px] leading-[1.15]">{book.title}</p>
+        <p className="mt-0.5 line-clamp-1 text-[12px] text-ink-muted">{authors}</p>
+        <p className="mt-1 line-clamp-1 text-[11px] text-ink-faint tabular">{factLine(book)}</p>
+        <p className="lbl mt-0.5 text-ink-muted">{statusLine(book)}</p>
+      </div>
     </>
   );
 
@@ -108,7 +94,7 @@ export function CoverTile({
           type="button"
           onClick={selection.onToggle}
           aria-pressed={selection.selected}
-          className="group block w-full text-left"
+          className="block w-full text-left"
         >
           {art}
         </button>
@@ -120,11 +106,11 @@ export function CoverTile({
     <li>
       <Link
         href={`/book/${book.id}`}
-        className="group block"
+        className="block"
         onContextMenu={
           selection
             ? (event) => {
-                // Long-press on touch surfaces as a context menu; suppressing it
+                // Long-press surfaces as a context menu on touch; suppressing it
                 // is what makes press-and-hold enter selection instead.
                 event.preventDefault();
                 selection.onLongPress();
@@ -142,9 +128,9 @@ export function CoverTile({
 export function CoverTileSkeleton() {
   return (
     <li aria-hidden="true">
-      <div className="aspect-[2/3] w-full animate-pulse rounded-cover bg-surface-sunk" />
-      <div className="mt-1.5 h-3 w-4/5 animate-pulse rounded bg-surface-sunk" />
-      <div className="mt-1 h-2.5 w-3/5 animate-pulse rounded bg-surface-sunk" />
+      <div className="aspect-[2/3] w-full animate-pulse border-2 border-rule bg-surface-sunk" />
+      <div className="mt-2 h-3 w-4/5 animate-pulse bg-surface-sunk" />
+      <div className="mt-1 h-2.5 w-3/5 animate-pulse bg-surface-sunk" />
     </li>
   );
 }

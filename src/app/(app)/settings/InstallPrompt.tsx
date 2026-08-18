@@ -57,7 +57,7 @@ export function InstallPrompt() {
         // The event can only be used once, whatever the outcome.
         setDeferred(null);
       }}
-      className="mt-2 min-h-11 rounded-card bg-accent px-4 text-sm font-medium text-paper"
+      className="mt-2 min-h-11 bg-accent px-4 text-sm font-medium text-on-accent"
     >
       Install Stacks
     </button>

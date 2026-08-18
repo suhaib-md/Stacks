@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { effectiveCoverColor, generatedCoverBackground } from "@/lib/cover";
+import { effectiveCoverColor, generatedCoverBackground, readableOn } from "@/lib/cover";
 
 /**
  * A cover, or a generated one when there isn't any art.
@@ -70,32 +70,25 @@ export function GeneratedCover({
   className?: string;
 }) {
   const base = effectiveCoverColor(coverColor, title);
+  const fg = readableOn(base);
 
   return (
+    // Stub art: a solid field with the title set on it. No gradient, no bands,
+    // no radius — a generated cover is still a cover, so it sits in the same
+    // 2:3 box as real jacket art with nothing else marking it out.
+    // Container query units keep one component right at 40px and at 240px.
     <div
-      className={`@container flex flex-col justify-between overflow-hidden text-white ${className}`}
-      style={{ background: generatedCoverBackground(base) }}
+      className={`@container flex flex-col justify-between overflow-hidden ${className}`}
+      style={{ background: generatedCoverBackground(base), color: fg }}
       role="img"
       aria-label={`Generated cover for ${title} by ${authors}`}
     >
-      <div
-        aria-hidden="true"
-        className="h-[8%] w-full shrink-0"
-        style={{ background: "rgba(0,0,0,0.28)" }}
-      />
-      <div className="flex flex-1 flex-col justify-center px-[8%] py-[4%]">
-        <span className="line-clamp-5 font-display text-[13cqw] font-semibold leading-tight drop-shadow-sm">
-          {title}
-        </span>
-        <span className="mt-[4%] line-clamp-2 text-[8cqw] leading-tight opacity-75">
-          {authors}
-        </span>
-      </div>
-      <div
-        aria-hidden="true"
-        className="h-[3%] w-full shrink-0"
-        style={{ background: "rgba(0,0,0,0.18)" }}
-      />
+      <span className="line-clamp-5 px-[9%] pt-[9%] font-display text-[13cqw] leading-[1.12]">
+        {title}
+      </span>
+      <span className="line-clamp-2 px-[9%] pb-[9%] text-[7.5cqw] leading-tight opacity-70">
+        {authors}
+      </span>
     </div>
   );
 }

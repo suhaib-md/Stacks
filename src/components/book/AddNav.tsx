@@ -25,10 +25,10 @@ export function AddNav() {
             key={tab.href}
             href={tab.href}
             aria-current={active ? "page" : undefined}
-            className={`min-h-11 flex-1 rounded-full px-4 text-center text-sm font-medium leading-[2.75rem] transition-colors ${
+            className={`min-h-11 flex-1 px-4 text-center text-sm font-medium leading-[2.75rem] transition-colors ${
               active
-                ? "border border-accent bg-accent-soft text-accent"
-                : "bg-surface-sunk text-ink-muted"
+                ? "border-2 border-accent bg-accent text-on-accent"
+                : "border-2 border-rule text-ink-muted"
             }`}
           >
             {tab.label}

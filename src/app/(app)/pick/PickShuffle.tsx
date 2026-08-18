@@ -56,7 +56,7 @@ export function PickShuffle({ books }: { books: Book[] }) {
       {picked ? (
         <>
           <Link href={`/book/${picked.id}`} className="block w-44">
-            <div className="aspect-[2/3] w-full overflow-hidden rounded-cover border border-rule shadow-lg">
+            <div className="aspect-[2/3] w-full overflow-hidden border-2 border-rule">
               <CoverImage
                 src={picked.coverUrl}
                 title={picked.title}
@@ -67,7 +67,7 @@ export function PickShuffle({ books }: { books: Book[] }) {
             </div>
           </Link>
 
-          <h2 className="mt-4 max-w-sm text-center font-display text-xl leading-snug">
+          <h2 className="mt-4 max-w-sm text-center disp text-lg leading-snug">
             {picked.title}
           </h2>
           <p className="mt-1 text-sm text-ink-muted">{formatAuthors(picked.authors)}</p>
@@ -79,7 +79,7 @@ export function PickShuffle({ books }: { books: Book[] }) {
             <button
               type="button"
               onClick={roll}
-              className="min-h-11 rounded-card border border-rule px-5 text-sm font-medium"
+              className="min-h-11 border-2 border-rule px-5 text-sm font-medium"
             >
               Something else
             </button>
@@ -87,7 +87,7 @@ export function PickShuffle({ books }: { books: Book[] }) {
               type="button"
               onClick={startReading}
               disabled={starting}
-              className="min-h-11 rounded-card bg-accent px-5 text-sm font-medium text-paper disabled:opacity-50"
+              className="min-h-11 bg-accent px-5 text-sm font-medium text-on-accent disabled:opacity-50"
             >
               {starting ? "Starting…" : "Start reading"}
             </button>
@@ -97,7 +97,7 @@ export function PickShuffle({ books }: { books: Book[] }) {
         <button
           type="button"
           onClick={roll}
-          className="min-h-14 rounded-card bg-accent px-8 font-display text-lg font-medium text-paper"
+          className="min-h-14 bg-accent px-8 disp text-base font-medium text-on-accent"
         >
           Pick one
         </button>

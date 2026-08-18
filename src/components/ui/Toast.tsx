@@ -36,7 +36,7 @@ export function Toast({
     <div
       role="status"
       aria-live="polite"
-      className="fixed inset-x-4 bottom-24 z-40 mx-auto flex max-w-sm items-center gap-3 rounded-card bg-ink px-4 py-3 text-sm text-paper shadow-lg motion-safe:animate-[toastIn_200ms_ease-out] md:bottom-8"
+      className="fixed inset-x-4 bottom-24 z-40 mx-auto flex max-w-sm items-center gap-3 border-2 border-accent bg-ink px-4 py-3 text-[13px] text-paper motion-safe:animate-[toastIn_200ms_ease-out] md:bottom-8"
     >
       <span className="flex-1">{message.text}</span>
       {message.href ? (

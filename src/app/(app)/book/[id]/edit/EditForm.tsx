@@ -9,7 +9,7 @@ import type { ApiBook } from "@/lib/books";
 import { isValidIsbn } from "@/lib/isbn";
 
 const inputClass =
-  "w-full rounded-card bg-surface-sunk px-3 py-2 text-sm outline-none ring-accent focus:ring-2";
+"w-full border-2 border-rule bg-surface-sunk px-3 py-2 text-sm outline-none";
 
 function Field({
   label,
@@ -134,7 +134,7 @@ export function EditForm({ book }: { book: ApiBook }) {
   return (
     <form onSubmit={submit} className="max-w-xl space-y-4">
       <div className="flex items-baseline justify-between">
-        <h1 className="font-display text-2xl font-semibold tracking-tight">Edit book</h1>
+        <h1 className="disp text-[28px]">Edit book</h1>
         <Link href={`/book/${book.id}`} className="text-sm text-ink-muted underline">
           Cancel
         </Link>
@@ -257,7 +257,7 @@ export function EditForm({ book }: { book: ApiBook }) {
       <button
         type="submit"
         disabled={pending}
-        className="min-h-11 w-full rounded-card bg-accent px-4 text-sm font-medium text-paper disabled:opacity-50"
+        className="min-h-11 w-full bg-accent px-4 text-sm font-medium text-on-accent disabled:opacity-50"
       >
         {pending ? "Saving…" : "Save changes"}
       </button>

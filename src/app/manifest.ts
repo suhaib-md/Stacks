@@ -8,9 +8,9 @@ export default function manifest(): MetadataRoute.Manifest {
     start_url: "/",
     scope: "/",
     display: "standalone",
-    // Splash uses paper; the status bar picks up the leather accent.
-    background_color: "#faf7f2",
-    theme_color: "#8a5a2b",
+    // Splash uses the ground; the status bar picks up the accent.
+    background_color: "#f3f2f2",
+    theme_color: "#ec3013",
     orientation: "portrait",
     categories: ["books", "productivity"],
     icons: [

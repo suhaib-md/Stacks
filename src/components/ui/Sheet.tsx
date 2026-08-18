@@ -76,19 +76,19 @@ export function Sheet({
         type="button"
         aria-label="Close"
         onClick={onClose}
-        className="absolute inset-0 bg-black/50 motion-safe:animate-[fadeIn_150ms_ease-out]"
+        className="absolute inset-0 bg-ink/55 motion-safe:animate-[fadeIn_150ms_ease-out]"
       />
       <div
         ref={panelRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby={labelledBy}
-        className="relative max-h-[90dvh] w-full overflow-y-auto rounded-t-sheet bg-surface p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-2xl motion-safe:animate-[sheetIn_220ms_cubic-bezier(0.32,0.72,0,1)] sm:max-w-[420px] sm:rounded-sheet sm:pb-4"
+        className="relative max-h-[90dvh] w-full overflow-y-auto border-t-2 border-rule bg-surface p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] motion-safe:animate-[sheetIn_220ms_cubic-bezier(0.32,0.72,0,1)] sm:max-w-[420px] sm:border-2 sm:pb-4"
       >
         {/* Grab handle — affordance on phones, meaningless on desktop. */}
         <div
           aria-hidden="true"
-          className="mx-auto mb-3 h-1 w-10 rounded-full bg-rule sm:hidden"
+          className="mx-auto mb-3 h-1 w-10 bg-rule sm:hidden"
         />
         {children}
       </div>

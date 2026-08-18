@@ -70,10 +70,10 @@ const hex = (value) => {
   return [(n >> 16) & 255, (n >> 8) & 255, n & 255, 255];
 };
 
-const PAPER = hex("#F6EFE4");
-const LEATHER = hex("#8A5A2B");
-const AMBER = hex("#E0A458");
-const INK = hex("#2A1D12");
+const PAPER = hex("#f3f2f2");
+const ACCENT = hex("#ec3013");
+const ACID = hex("#d6f34a");
+const INK = hex("#201e1d");
 
 function canvas(size, [r, g, b, a]) {
   const px = new Uint8Array(size * size * 4);
@@ -117,7 +117,7 @@ function drawMark(px, size, scale = 1) {
 
   bar(0.20, 0.30, 0.34, 0.74, PAPER);
   bar(0.20, 0.30, 0.34, 0.36, INK); // head band
-  bar(0.38, 0.24, 0.52, 0.74, AMBER);
+  bar(0.38, 0.24, 0.52, 0.74, ACID);
   bar(0.38, 0.24, 0.52, 0.31, INK);
   bar(0.56, 0.34, 0.70, 0.74, PAPER);
   bar(0.56, 0.34, 0.70, 0.40, INK);
@@ -137,7 +137,7 @@ function drawBoldMark(px, size) {
 
   bar(0.14, 0.26, 0.34, 0.76, PAPER);
   bar(0.14, 0.26, 0.34, 0.36, INK);
-  bar(0.38, 0.17, 0.60, 0.76, AMBER);
+  bar(0.38, 0.17, 0.60, 0.76, ACID);
   bar(0.38, 0.17, 0.60, 0.29, INK);
   bar(0.64, 0.32, 0.86, 0.76, PAPER);
   bar(0.64, 0.32, 0.86, 0.42, INK);
@@ -145,7 +145,7 @@ function drawBoldMark(px, size) {
 }
 
 function icon(size, { maskable = false, bold = false } = {}) {
-  const px = canvas(size, LEATHER);
+  const px = canvas(size, ACCENT);
   if (bold) drawBoldMark(px, size);
   else drawMark(px, size, maskable ? 0.8 : 1);
   return encodePng(size, px);

@@ -78,12 +78,12 @@ export function IsbnAdd() {
             placeholder="978…"
             aria-invalid={error ? true : undefined}
             aria-describedby={error ? "isbn-error" : undefined}
-            className="min-h-11 flex-1 rounded-card bg-surface-sunk px-4 text-base tabular outline-none ring-accent focus:ring-2"
+            className="min-h-11 flex-1 border-2 border-rule bg-surface-sunk px-4 text-base tabular outline-none"
           />
           <button
             type="submit"
             disabled={pending || input.trim().length === 0}
-            className="min-h-11 rounded-card bg-accent px-5 text-sm font-medium text-paper disabled:opacity-50"
+            className="min-h-11 bg-accent px-5 text-sm font-medium text-on-accent disabled:opacity-50"
           >
             {pending ? "Looking…" : "Look up"}
           </button>

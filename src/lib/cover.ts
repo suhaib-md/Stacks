@@ -11,33 +11,48 @@ export function titleColor(title: string): string {
     hash = (hash * 31 + title.charCodeAt(i)) | 0;
   }
   const hue = Math.abs(hash) % 360;
-  // Hex, not hsl(): every colour in this module has to be shadeable, and shade()
-  // parses hex. Returning an hsl() string made gradients silently flat.
-  // Held in a muted band so a wall of generated tiles reads as cloth spines
-  // rather than a colour chart, and stays legible under white text.
-  return hslToHex(hue / 360, 0.28, 0.38);
+  // Hex, not hsl(): shade() and readableOn() both parse hex only.
+  // Saturated and deep enough to sit alongside COVER_PALETTE rather than beside
+  // it — covers are the one place colour is allowed to be loud.
+  return hslToHex(hue / 360, 0.42, 0.34);
 }
 
 /**
- * Hand-picked backgrounds for generated covers.
+ * Backgrounds for generated cover art.
  *
  * Older and regional editions frequently have no cover art anywhere, so a
- * chosen colour is often the only art a book will ever have. All are dark
- * enough to carry white text, and held in one saturation band so a shelf of
- * them looks like a set rather than a paint chart.
+ * chosen colour is often the only art a book will ever have.
+ *
+ * Covers are the only full-colour thing in the app — everything around them is
+ * ink, red and acid — so this is the one palette allowed to be bold.
+ *
+ * The design file's palette also contained the system red (#ec3013) and the
+ * acid (#d6f34a). Both are deliberately left out: the sheet says acid means
+ * reading progress and red means the action that commits, and a cover wearing
+ * either would make those readings ambiguous on a shelf.
  */
 export const COVER_PALETTE: ReadonlyArray<{ name: string; hex: string }> = [
-  { name: "Leather", hex: "#8a5a2b" },
-  { name: "Clay", hex: "#8a4436" },
-  { name: "Wine", hex: "#6b2f3a" },
-  { name: "Plum", hex: "#553350" },
-  { name: "Ink", hex: "#2f3b52" },
-  { name: "Teal", hex: "#2b5555" },
-  { name: "Forest", hex: "#3a5a45" },
-  { name: "Moss", hex: "#556033" },
-  { name: "Ochre", hex: "#8a6b2b" },
-  { name: "Slate", hex: "#414d57" },
+  { name: "Ink", hex: "#201e1d" },
+  { name: "Ultramarine", hex: "#2743d8" },
+  { name: "Pine", hex: "#0f6b62" },
+  { name: "Ochre", hex: "#c88a2b" },
+  { name: "Violet", hex: "#4b2fa8" },
+  { name: "Bone", hex: "#e8e4dc" },
+  { name: "Rust", hex: "#a83208" },
+  { name: "Slate", hex: "#46505c" },
 ];
+
+/**
+ * Ink or paper, whichever holds contrast on the given ground. Rec. 601 luma —
+ * the bone and ochre entries need ink, the rest need paper.
+ */
+export function readableOn(hex: string): string {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex.trim());
+  if (!m) return "#f3f2f2";
+  const n = Number.parseInt(m[1], 16);
+  const luma = (0.299 * ((n >> 16) & 255) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255;
+  return luma > 0.6 ? "#201e1d" : "#f3f2f2";
+}
 
 /** Shift a hex colour's lightness. Positive lightens, negative darkens. */
 export function shade(hex: string, delta: number): string {
@@ -50,11 +65,12 @@ export function shade(hex: string, delta: number): string {
 }
 
 /**
- * The background for a generated cover: a soft vertical gradient rather than a
- * flat fill, which reads as cloth or board instead of a colour swatch.
+ * The background for a generated cover. Flat: the ledger has no gradients and
+ * no elevation, so a stub cover is a solid field with the title set on it.
+ * Kept as a function because every call site already goes through it.
  */
 export function generatedCoverBackground(base: string): string {
-  return `linear-gradient(155deg, ${shade(base, 0.08)} 0%, ${base} 52%, ${shade(base, -0.07)} 100%)`;
+  return base;
 }
 
 /** The colour a book gets when you haven't chosen one. */
@@ -63,25 +79,6 @@ export function effectiveCoverColor(
   title: string,
 ): string {
   return coverColor ?? titleColor(title);
-}
-
-/**
- * Clamp an extracted cover colour into a band that stays legible behind white
- * text in both themes. A near-white cover would otherwise wash the header out.
- */
-export function clampAccent(hex: string): string | null {
-  const match = /^#?([0-9a-f]{6})$/i.exec(hex.trim());
-  if (!match) return null;
-
-  const int = Number.parseInt(match[1], 16);
-  const r = (int >> 16) & 255;
-  const g = (int >> 8) & 255;
-  const b = int & 255;
-
-  const [h, s, l] = rgbToHsl(r, g, b);
-  const clampedL = Math.min(0.55, Math.max(0.22, l));
-  const clampedS = Math.min(0.65, Math.max(0.15, s));
-  return hslToHex(h, clampedS, clampedL);
 }
 
 function rgbToHsl(r: number, g: number, b: number): [number, number, number] {
@@ -114,85 +111,4 @@ function hslToHex(h: number, s: number, l: number): string {
       .padStart(2, "0");
   };
   return `#${f(0)}${f(8)}${f(4)}`;
-}
-
-/**
- * Dominant colour from a cover image, computed on the client.
- *
- * Returns null on any failure — most often a cover host that sends no CORS
- * headers, which taints the canvas. That is expected and common, so it must be
- * silent: logging here would fire on nearly every detail view.
- */
-export async function extractDominantColor(src: string): Promise<string | null> {
-  try {
-    const image = new Image();
-    image.crossOrigin = "anonymous";
-    image.src = src;
-
-    await new Promise<void>((resolve, reject) => {
-      image.onload = () => resolve();
-      image.onerror = () => reject(new Error("load failed"));
-    });
-
-    const size = 32; // Downsample hard; we want the dominant hue, not detail.
-    const canvas = document.createElement("canvas");
-    canvas.width = size;
-    canvas.height = size;
-    const ctx = canvas.getContext("2d", { willReadFrequently: true });
-    if (!ctx) return null;
-
-    ctx.drawImage(image, 0, 0, size, size);
-    const { data } = ctx.getImageData(0, 0, size, size);
-
-    const buckets = new Map<string, { count: number; r: number; g: number; b: number }>();
-
-    for (let i = 0; i < data.length; i += 4) {
-      const r = data[i];
-      const g = data[i + 1];
-      const b = data[i + 2];
-      const alpha = data[i + 3];
-      if (alpha < 200) continue;
-
-      // Covers are mostly paper and ink at the edges; those pixels are not the
-      // book's colour.
-      const max = Math.max(r, g, b);
-      const min = Math.min(r, g, b);
-      if (max > 240 && min > 240) continue;
-      if (max < 24) continue;
-
-      const key = `${r >> 4}-${g >> 4}-${b >> 4}`;
-      const bucket = buckets.get(key);
-      if (bucket) {
-        bucket.count += 1;
-        bucket.r += r;
-        bucket.g += g;
-        bucket.b += b;
-      } else {
-        buckets.set(key, { count: 1, r, g, b });
-      }
-    }
-
-    if (buckets.size === 0) return null;
-
-    // Most frequent bucket, tie-broken by saturation so a large flat grey loses
-    // to a slightly smaller but characterful colour.
-    let best: { score: number; r: number; g: number; b: number } | null = null;
-    for (const bucket of buckets.values()) {
-      const r = bucket.r / bucket.count;
-      const g = bucket.g / bucket.count;
-      const b = bucket.b / bucket.count;
-      const saturation = (Math.max(r, g, b) - Math.min(r, g, b)) / 255;
-      const score = bucket.count * (1 + saturation);
-      if (!best || score > best.score) best = { score, r, g, b };
-    }
-
-    if (!best) return null;
-
-    const hex = `#${[best.r, best.g, best.b]
-      .map((v) => Math.round(v).toString(16).padStart(2, "0"))
-      .join("")}`;
-    return clampAccent(hex);
-  } catch {
-    return null;
-  }
 }

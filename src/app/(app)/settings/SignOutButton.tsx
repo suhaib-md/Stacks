@@ -19,7 +19,7 @@ export function SignOutButton() {
     <button
       onClick={signOut}
       disabled={pending}
-      className="min-h-11 rounded-card border border-rule px-4 text-sm font-medium text-danger transition disabled:opacity-50"
+      className="min-h-11 border-2 border-rule px-4 text-sm font-medium text-danger transition disabled:opacity-50"
     >
       {pending ? "Signing out…" : "Sign out"}
     </button>

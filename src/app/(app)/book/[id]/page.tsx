@@ -1,7 +1,6 @@
 import { eq } from "drizzle-orm";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { CoverColorProbe } from "@/components/book/CoverColorProbe";
 import { CoverImage } from "@/components/book/CoverImage";
 import { ReadingPanel } from "@/components/book/ReadingPanel";
 import { RefreshMetadata } from "@/components/book/RefreshMetadata";
@@ -13,13 +12,6 @@ import { isIncomplete } from "@/lib/refresh";
 import { BookActions } from "./BookActions";
 
 export const dynamic = "force-dynamic";
-
-const STATUS_LABEL: Record<string, string> = {
-  unread: "Unread",
-  reading: "Reading",
-  finished: "Finished",
-  dnf: "Did not finish",
-};
 
 export default async function BookDetailPage({
   params,
@@ -50,105 +42,88 @@ export default async function BookDetailPage({
 
   return (
     <>
-      {/* Only set the variable when we already know the colour. Leaving it unset
-          lets the probe below fill it in at the root without being overridden. */}
-      <div
-        className="-mx-4 -mt-4 px-4 pb-6 pt-4"
-        style={
-          book.coverColor
-            ? ({ "--book-accent": book.coverColor } as React.CSSProperties)
-            : undefined
-        }
-      >
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-x-0 top-0 h-64 opacity-90"
-          style={{
-            background:
-              "linear-gradient(to bottom, var(--book-accent, var(--surface-sunk)) 0%, transparent 100%)",
-          }}
-        />
+      <Link href="/" className="lbl text-ink-muted hover:text-ink">
+        &larr; Library
+      </Link>
 
-        <div className="relative">
-          <Link href="/" className="text-sm underline opacity-80">
-            ← Library
-          </Link>
-
-          <div className="mt-4 flex flex-col gap-5 sm:flex-row">
-            <div className="h-[240px] w-40 shrink-0 self-start overflow-hidden rounded-cover border border-rule shadow-lg">
-              <CoverImage
-                src={book.coverUrl}
-                title={book.title}
-                authors={formatAuthors(book.authors)}
-                coverColor={book.coverColor}
-                className="h-full w-full"
-              />
-            </div>
-
-            <div className="min-w-0 flex-1">
-              <h1 className="font-display text-3xl font-semibold leading-tight tracking-tight">
-                {book.title}
-              </h1>
-              {book.subtitle ? (
-                <p className="mt-1 font-display text-lg opacity-75">{book.subtitle}</p>
-              ) : null}
-              <p className="mt-2 text-sm">
-                {authors.length > 0 ? authors.join(", ") : "Unknown author"}
-              </p>
-
-              <p className="mt-3 inline-flex items-center rounded-full bg-surface px-3 py-1 text-xs font-medium">
-                {STATUS_LABEL[book.readStatus] ?? book.readStatus}
-                {book.readStatus === "reading" && book.pageCount ? (
-                  <span className="ml-2 tabular opacity-70">
-                    {book.currentPage} / {book.pageCount}
-                  </span>
-                ) : null}
-              </p>
-
-              <BookActions bookId={book.id} title={book.title} />
-            </div>
+      {/* The book as a record sheet: cover on the left, the entry beside it.
+          No gradient header and no elevation — regions are divided by rules. */}
+      <div className="mt-4 flex flex-col gap-6 border-t-2 border-rule pt-6 md:flex-row md:gap-10">
+        <div className="w-40 shrink-0 md:w-48">
+          <div
+            className={`aspect-[2/3] w-full overflow-hidden border-2 border-rule ${
+              book.readStatus === "dnf" ? "opacity-50" : ""
+            }`}
+          >
+            <CoverImage
+              src={book.coverUrl}
+              title={book.title}
+              authors={formatAuthors(book.authors)}
+              coverColor={book.coverColor}
+              className="h-full w-full"
+            />
           </div>
+          <BookActions bookId={book.id} title={book.title} />
+        </div>
+
+        <div className="min-w-0 flex-1">
+          <h1 className="font-display text-[34px] leading-[1.02] md:text-[46px]">
+            {book.title}
+          </h1>
+          {book.subtitle ? (
+            <p className="mt-2 font-display text-lg text-ink-muted">{book.subtitle}</p>
+          ) : null}
+          <p className="mt-3 text-[13px]">
+            {authors.length > 0 ? authors.join(", ") : "Unknown author"}
+          </p>
+          <p className="lbl mt-2 text-ink-muted">
+            {[book.genre, book.publishedYear].filter(Boolean).join(" · ")}
+          </p>
+
+          <ReadingPanel book={toApiBook(book)} />
+
+          {isIncomplete(book) ? <RefreshMetadata bookId={book.id} /> : null}
+
+          {/* The entry — every catalogued field, one ruled row each. */}
+          <section className="mt-8 border-t-2 border-rule pt-4">
+            <h2 className="lbl text-accent">The entry</h2>
+            <dl className="mt-3">
+              {facts
+                .filter(([, value]) => value !== null && value !== "")
+                .map(([label, value]) => (
+                  <div
+                    key={label}
+                    className="flex items-baseline gap-4 border-b border-rule-minor py-2"
+                  >
+                    <dt className="lbl w-28 shrink-0 text-ink-muted">{label}</dt>
+                    <dd className="min-w-0 flex-1 text-[13px] capitalize tabular">{value}</dd>
+                  </div>
+                ))}
+            </dl>
+          </section>
+
+          {tags.length > 0 ? (
+            <ul className="mt-4 flex flex-wrap gap-2">
+              {tags.map((tag) => (
+                <li key={tag} className="border-2 border-rule px-2 py-1 text-[11px] text-ink-muted">
+                  {tag}
+                </li>
+              ))}
+            </ul>
+          ) : null}
+
+          {book.description ? (
+            <section className="mt-8 max-w-prose border-t-2 border-rule pt-4">
+              <h2 className="lbl text-accent">Description</h2>
+              {/* Provider text, rendered as text — never as HTML. */}
+              <p className="mt-2 whitespace-pre-line text-[13px] leading-relaxed">
+                {book.description}
+              </p>
+            </section>
+          ) : null}
         </div>
       </div>
 
-      <ReadingPanel book={toApiBook(book)} />
-
-      {isIncomplete(book) ? <RefreshMetadata bookId={book.id} /> : null}
-
-      <dl className="mt-8 grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-sm">
-        {facts
-          .filter(([, value]) => value !== null && value !== "")
-          .map(([label, value]) => (
-            <div key={label} className="contents">
-              <dt className="text-ink-muted">{label}</dt>
-              <dd className="capitalize tabular">{value}</dd>
-            </div>
-          ))}
-      </dl>
-
-      {tags.length > 0 ? (
-        <ul className="mt-4 flex flex-wrap gap-2">
-          {tags.map((tag) => (
-            <li key={tag} className="rounded-full bg-surface-sunk px-3 py-1 text-xs text-ink-muted">
-              {tag}
-            </li>
-          ))}
-        </ul>
-      ) : null}
-
-      {book.description ? (
-        <section className="mt-8 max-w-prose">
-          <h2 className="text-sm font-medium text-ink-muted">Description</h2>
-          {/* Provider text, rendered as text — never as HTML. */}
-          <p className="mt-2 whitespace-pre-line text-sm leading-relaxed">{book.description}</p>
-        </section>
-      ) : null}
-
-      <CoverColorProbe
-        bookId={book.id}
-        coverUrl={book.coverUrl}
-        hasColor={Boolean(book.coverColor)}
-      />
     </>
   );
 }

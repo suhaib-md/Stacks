@@ -61,7 +61,7 @@ export function RefreshSweep({ candidates }: { candidates: Candidate[] }) {
         type="button"
         onClick={run}
         disabled={state.kind === "working"}
-        className="mt-3 min-h-11 rounded-card bg-accent px-4 text-sm font-medium text-paper disabled:opacity-50"
+        className="mt-3 min-h-11 bg-accent px-4 text-sm font-medium text-on-accent disabled:opacity-50"
       >
         {state.kind === "working"
           ? `Refreshing ${state.done + 1} of ${candidates.length}…`

@@ -16,7 +16,7 @@ export function ProgressSheet({ book, onClose }: { book: Book; onClose: () => vo
 
   return (
     <Sheet open onClose={onClose} labelledBy="progress-title">
-      <h2 id="progress-title" className="font-display text-lg leading-snug">
+      <h2 id="progress-title" className="disp text-base leading-snug">
         {book.title}
       </h2>
       <div className="mt-1 flex items-center justify-between">
@@ -45,7 +45,7 @@ export function ProgressSheet({ book, onClose }: { book: Book; onClose: () => vo
         <button
           type="button"
           onClick={onClose}
-          className="min-h-11 flex-1 rounded-card border border-rule px-4 text-sm font-medium"
+          className="min-h-11 flex-1 border-2 border-rule px-4 text-sm font-medium"
         >
           Done
         </button>
@@ -57,7 +57,7 @@ export function ProgressSheet({ book, onClose }: { book: Book; onClose: () => vo
             await patch({ readStatus: "finished" });
             onClose();
           }}
-          className="min-h-11 flex-1 rounded-card bg-accent px-4 text-sm font-medium text-paper"
+          className="min-h-11 flex-1 bg-accent px-4 text-sm font-medium text-on-accent"
         >
           Finished it
         </button>

@@ -36,8 +36,8 @@ export function ListRow({
       {selection?.active ? (
         <span
           aria-hidden="true"
-          className={`flex size-5 shrink-0 items-center justify-center rounded-full border-2 ${
-            selection.selected ? "border-accent bg-accent text-paper" : "border-rule"
+          className={`flex size-5 shrink-0 items-center justify-center border-2 ${
+            selection.selected ? "border-accent bg-accent text-on-accent" : "border-rule"
           }`}
         >
           {selection.selected ? (
@@ -48,7 +48,7 @@ export function ListRow({
         </span>
       ) : null}
         <div
-          className={`h-[54px] w-9 shrink-0 overflow-hidden rounded-cover border border-rule ${
+          className={`h-[54px] w-9 shrink-0 overflow-hidden border-2 border-rule ${
             book.readStatus === "dnf" ? "opacity-55 saturate-50" : ""
           }`}
         >
@@ -78,7 +78,7 @@ export function ListRow({
   );
 
   const rowClass =
-    "flex w-full items-center gap-3 py-2 text-left transition-colors hover:bg-surface-sunk";
+    "flex w-full items-center gap-3 py-2 text-left transition-colors hover:bg-ink/[.06]";
 
   if (selection?.active) {
     return (

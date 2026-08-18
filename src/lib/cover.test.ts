@@ -3,6 +3,7 @@ import {
   COVER_PALETTE,
   effectiveCoverColor,
   generatedCoverBackground,
+  readableOn,
   shade,
   titleColor,
 } from "./cover";
@@ -48,16 +49,13 @@ describe("shade", () => {
 });
 
 describe("generatedCoverBackground", () => {
-  it("produces three genuinely different stops", () => {
-    const css = generatedCoverBackground("#8a5a2b");
-    const stops = css.match(/#[0-9a-f]{6}/g) ?? [];
-    expect(stops).toHaveLength(3);
-    expect(new Set(stops).size).toBe(3);
+  it("is a flat colour — the ledger has no gradients", () => {
+    expect(generatedCoverBackground("#2743d8")).toBe("#2743d8");
   });
 
-  it("works from an automatic colour too", () => {
-    const stops = generatedCoverBackground(titleColor("Some Book")).match(/#[0-9a-f]{6}/g) ?? [];
-    expect(new Set(stops).size).toBe(3);
+  it("passes an automatic colour through unchanged", () => {
+    const base = titleColor("Some Book");
+    expect(generatedCoverBackground(base)).toBe(base);
   });
 });
 
@@ -70,14 +68,24 @@ describe("COVER_PALETTE", () => {
     expect(new Set(COVER_PALETTE.map((s) => s.hex)).size).toBe(COVER_PALETTE.length);
   });
 
-  it("is dark enough throughout to carry white text", () => {
+  it("pairs every entry with a label colour that contrasts", () => {
+    // The palette is deliberately not all-dark any more — Bone is a light
+    // ground — so legibility comes from readableOn rather than from the
+    // palette being uniformly dark.
     for (const { hex, name } of COVER_PALETTE) {
-      const n = Number.parseInt(hex.slice(1), 16);
-      // Rec. 601 luma; white on anything above ~0.55 starts to fail.
-      const luma =
-        (0.299 * ((n >> 16) & 255) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255;
-      expect(luma, `${name} is too light for white text`).toBeLessThan(0.55);
+      const fg = readableOn(hex);
+      expect(["#201e1d", "#f3f2f2"], `${name} got an unexpected label colour`).toContain(fg);
     }
+  });
+
+  it("puts ink on the light grounds and paper on the dark ones", () => {
+    expect(readableOn("#e8e4dc")).toBe("#201e1d");
+    expect(readableOn("#201e1d")).toBe("#f3f2f2");
+    expect(readableOn("#2743d8")).toBe("#f3f2f2");
+  });
+
+  it("falls back to paper for an unparseable colour", () => {
+    expect(readableOn("nonsense")).toBe("#f3f2f2");
   });
 });
 

@@ -50,8 +50,8 @@ export function RefreshMetadata({ bookId }: { bookId: string }) {
   }
 
   return (
-    <div className="mt-6 rounded-card border border-rule p-4">
-      <h2 className="text-sm font-medium">Incomplete record</h2>
+    <div className="mt-6 border-2 border-rule p-4">
+      <h2 className="lbl text-accent">Incomplete record</h2>
       <p className="mt-1 max-w-prose text-sm text-ink-muted">
         Some details are missing — often because a catalogue was unavailable when this
         book was added. Refreshing fills only the gaps and never changes anything you
@@ -62,7 +62,7 @@ export function RefreshMetadata({ bookId }: { bookId: string }) {
         type="button"
         onClick={refresh}
         disabled={state.kind === "working"}
-        className="mt-3 min-h-11 rounded-card bg-surface px-4 text-sm font-medium disabled:opacity-50"
+        className="mt-3 min-h-11 bg-surface px-4 text-sm font-medium disabled:opacity-50"
       >
         {state.kind === "working" ? "Checking…" : "Refresh metadata"}
       </button>

@@ -46,7 +46,7 @@ export default async function PickPage({
 
   return (
     <>
-      <h1 className="font-display text-3xl font-semibold tracking-tight">Pick for me</h1>
+      <h1 className="disp text-[34px] md:text-[40px]">Pick for me</h1>
       <p className="mt-2 text-sm text-ink-muted">
         {unreadTotal === 0
           ? "Nothing unread — you're all caught up."
@@ -58,10 +58,10 @@ export default async function PickPage({
           <Link
             href="/pick"
             aria-current={genre === null ? "page" : undefined}
-            className={`min-h-9 rounded-full px-3 text-xs font-medium leading-9 ${
+            className={`min-h-9 px-3 text-xs font-medium leading-9 ${
               genre === null
-                ? "border border-accent bg-accent-soft text-accent"
-                : "bg-surface-sunk text-ink-muted"
+                ? "border-2 border-accent bg-accent text-on-accent"
+                : "border-2 border-rule text-ink-muted"
             }`}
           >
             Any genre
@@ -71,10 +71,10 @@ export default async function PickPage({
               key={g}
               href={`/pick?genre=${encodeURIComponent(g)}`}
               aria-current={genre === g ? "page" : undefined}
-              className={`min-h-9 rounded-full px-3 text-xs font-medium leading-9 ${
+              className={`min-h-9 px-3 text-xs font-medium leading-9 ${
                 genre === g
-                  ? "border border-accent bg-accent-soft text-accent"
-                  : "bg-surface-sunk text-ink-muted"
+                  ? "border-2 border-accent bg-accent text-on-accent"
+                  : "border-2 border-rule text-ink-muted"
               }`}
             >
               {g}

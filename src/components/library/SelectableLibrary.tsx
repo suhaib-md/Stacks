@@ -103,7 +103,7 @@ export function SelectableLibrary({ books, view }: { books: Book[]; view: "grid"
   return (
     <>
       {mode.active ? (
-        <div className="sticky top-14 z-20 -mx-4 mb-2 flex items-center gap-2 border-b border-rule bg-paper/95 px-4 py-2 backdrop-blur">
+        <div className="sticky top-14 z-20 -mx-4 mb-2 flex items-center gap-2 border-b-2 border-rule bg-paper/95 px-4 py-2 backdrop-blur">
           <span className="text-sm font-medium tabular">{selectedIds.length} selected</span>
           <div className="ml-auto flex gap-1">
             <BarButton onClick={() => setSheet("status")}>Status</BarButton>
@@ -118,7 +118,7 @@ export function SelectableLibrary({ books, view }: { books: Book[]; view: "grid"
       ) : null}
 
       {view === "list" ? (
-        <ul className="mt-4 divide-y divide-rule">
+        <ul className="mt-4 divide-y divide-rule-minor">
           {books.map((book) => (
             <ListRow key={book.id} book={book} selection={selectionFor(book)} />
           ))}
@@ -174,7 +174,7 @@ function BarButton({
     <button
       type="button"
       onClick={onClick}
-      className={`min-h-9 rounded-card px-3 text-xs font-medium ${
+      className={`min-h-9 px-3 text-xs font-medium ${
         danger ? "text-danger" : "text-ink-muted"
       }`}
     >
