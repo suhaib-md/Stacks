@@ -42,3 +42,6 @@ yarn-debug.log*
 yarn-error.log*
 .vercel
 *.tsbuildinfo
+
+# local wrangler dev log
+wd.log
